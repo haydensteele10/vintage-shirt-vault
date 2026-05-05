@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
+import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Collection from './pages/Collection';
 import ShirtDetail from './pages/ShirtDetail';
@@ -9,17 +12,22 @@ import PriceHistory from './pages/PriceHistory';
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="collection" element={<Collection />} />
-          <Route path="shirts/new" element={<AddEditShirt />} />
-          <Route path="shirts/:id" element={<ShirtDetail />} />
-          <Route path="shirts/:id/edit" element={<AddEditShirt />} />
-          <Route path="price-history" element={<PriceHistory />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Auth />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="collection" element={<Collection />} />
+              <Route path="shirts/new" element={<AddEditShirt />} />
+              <Route path="shirts/:id" element={<ShirtDetail />} />
+              <Route path="shirts/:id/edit" element={<AddEditShirt />} />
+              <Route path="price-history" element={<PriceHistory />} />
+            </Route>
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
