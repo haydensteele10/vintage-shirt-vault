@@ -185,6 +185,7 @@ function MosaicIcon({ active }) {
 export default function Collection() {
   const [shirts, setShirts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [search, setSearch] = useState('');
   const [styleFilter, setStyleFilter] = useState('');
   const [conditionFilter, setConditionFilter] = useState('');
@@ -194,6 +195,7 @@ export default function Collection() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      setLoadError(null);
       let q = supabase
         .from('shirts')
         .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at, price_last_checked');
@@ -204,7 +206,36 @@ export default function Collection() {
       const [col, dir] = sort.split(':');
       q = q.order(col, { ascending: dir === 'asc' });
 
-      const { data } = await q;
+      const { data, error } = await q;
+
+      if (error) {
+        // price_last_checked column may not exist yet (migration not yet run).
+        // Fall back to the base columns so the page still works.
+        if (error.message?.includes('price_last_checked')) {
+          const { data: fallback, error: fallbackErr } = await supabase
+            .from('shirts')
+            .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at')
+            .order(col, { ascending: dir === 'asc' });
+
+          if (fallbackErr) {
+            setLoadError(fallbackErr.message);
+            setLoading(false);
+            return;
+          }
+          let results = fallback ?? [];
+          if (search.trim()) {
+            const s = search.toLowerCase();
+            results = results.filter((r) => r.brand?.toLowerCase().includes(s));
+          }
+          setShirts(results);
+          setLoading(false);
+          return;
+        }
+        setLoadError(error.message);
+        setLoading(false);
+        return;
+      }
+
       let results = data ?? [];
 
       if (search.trim()) {
@@ -281,6 +312,13 @@ export default function Collection() {
           {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
+
+      {/* Load error */}
+      {loadError && (
+        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+          Failed to load collection: {loadError}
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (

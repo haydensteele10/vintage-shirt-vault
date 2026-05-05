@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { searchEbaySoldListings } from '../lib/ebay';
 import { analyzeShirtPhoto } from '../lib/claude';
 
@@ -124,6 +125,7 @@ export default function AddEditShirt() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id) && id !== 'new';
+  const { user } = useAuth();
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [slots, setSlots] = useState(EMPTY_SLOTS);
@@ -284,7 +286,7 @@ export default function AddEditShirt() {
 
     const { data: saved, error: saveError } = isEdit
       ? await supabase.from('shirts').update(payload).eq('id', id).select().single()
-      : await supabase.from('shirts').insert(payload).select().single();
+      : await supabase.from('shirts').insert({ ...payload, user_id: user?.id }).select().single();
 
     if (saveError) { setError(saveError.message); setSaving(false); return; }
 
