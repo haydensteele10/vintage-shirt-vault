@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
+const inputCls = 'w-full bg-gray-800 border border-gray-700/80 rounded-xl px-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all';
+const selectCls = 'w-full bg-gray-800 border border-gray-700/80 rounded-xl px-4 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all';
+
 export default function PriceHistory() {
   const [rows, setRows] = useState([]);
   const [shirts, setShirts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-
-  // Add price form state
   const [adding, setAdding] = useState(false);
   const [newEntry, setNewEntry] = useState({ shirt_id: '', price: '', source: '', notes: '' });
   const [saving, setSaving] = useState(false);
@@ -16,10 +17,7 @@ export default function PriceHistory() {
   useEffect(() => {
     async function load() {
       const [{ data: history }, { data: shirts }] = await Promise.all([
-        supabase
-          .from('price_history')
-          .select('*, shirts(id, brand, style)')
-          .order('recorded_at', { ascending: false }),
+        supabase.from('price_history').select('*, shirts(id, brand, style)').order('recorded_at', { ascending: false }),
         supabase.from('shirts').select('id, brand').order('brand'),
       ]);
       setRows(history ?? []);
@@ -56,14 +54,19 @@ export default function PriceHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Price History</h1>
+          <h1 className="text-2xl font-bold text-gray-50 tracking-tight">Price History</h1>
           <p className="text-gray-500 mt-1 text-sm">All recorded valuations across your collection</p>
         </div>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors"
+          className={`flex-shrink-0 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-150 ${
+            adding
+              ? 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700'
+              : 'bg-amber-500 hover:bg-amber-400 text-gray-950 shadow-glow-sm hover:shadow-glow'
+          }`}
         >
           {adding ? 'Cancel' : '+ Log Price'}
         </button>
@@ -71,113 +74,123 @@ export default function PriceHistory() {
 
       {/* Add entry form */}
       {adding && (
-        <form onSubmit={handleAddEntry} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-800 mb-4">Log New Price</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Shirt <span className="text-red-400">*</span></label>
-              <select
-                required
-                value={newEntry.shirt_id}
-                onChange={(e) => setNewEntry((v) => ({ ...v, shirt_id: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-              >
+        <form onSubmit={handleAddEntry} className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6 space-y-5">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-800/60">
+            <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">Log New Price</span>
+            <div className="flex-1 h-px bg-gray-800" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Shirt <span className="text-amber-500">*</span>
+              </label>
+              <select required value={newEntry.shirt_id} onChange={(e) => setNewEntry((v) => ({ ...v, shirt_id: e.target.value }))} className={selectCls}>
                 <option value="">Select a shirt…</option>
                 {shirts.map((s) => <option key={s.id} value={s.id}>{s.brand}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($) <span className="text-red-400">*</span></label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Price ($) <span className="text-amber-500">*</span>
+              </label>
               <input
                 required type="number" step="0.01" min="0"
                 value={newEntry.price}
                 onChange={(e) => setNewEntry((v) => ({ ...v, price: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 placeholder="0.00"
+                className={inputCls}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">Source</label>
               <input
                 value={newEntry.source}
                 onChange={(e) => setNewEntry((v) => ({ ...v, source: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 placeholder="eBay sold, Depop, estimate…"
+                className={inputCls}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</label>
               <input
                 value={newEntry.notes}
                 onChange={(e) => setNewEntry((v) => ({ ...v, notes: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                 placeholder="Optional context…"
+                className={inputCls}
               />
             </div>
           </div>
-          <div className="mt-4 flex gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-gray-950 text-sm font-semibold rounded-xl transition-all duration-150 disabled:opacity-40 shadow-glow-sm"
+          >
+            {saving ? 'Saving…' : 'Save Entry'}
+          </button>
         </form>
       )}
 
-      {/* Filter */}
-      <div className="flex items-center gap-3">
+      {/* Filter bar */}
+      <div className="flex items-center gap-3 p-3 bg-gray-900/60 border border-gray-800/60 rounded-2xl">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 transition-all"
         >
           <option value="">All shirts</option>
           {shirts.map((s) => <option key={s.id} value={s.id}>{s.brand}</option>)}
         </select>
         {filter && (
-          <button onClick={() => setFilter('')} className="text-sm text-amber-600 hover:underline">Clear</button>
+          <button
+            onClick={() => setFilter('')}
+            className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            Clear filter
+          </button>
+        )}
+        {!loading && (
+          <span className="ml-auto text-xs text-gray-600">{filtered.length} entr{filtered.length !== 1 ? 'ies' : 'y'}</span>
         )}
       </div>
 
       {/* Table */}
       {loading ? (
-        <p className="text-gray-400">Loading…</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-lg font-medium">No price history yet</p>
-          <p className="text-sm mt-1">Prices are logged automatically when you set a value on a shirt.</p>
+        <div className="text-center py-20 bg-gray-900/40 rounded-2xl border border-gray-800/40">
+          <p className="text-gray-400 font-medium">No price history yet</p>
+          <p className="text-sm text-gray-600 mt-1">Prices are logged automatically when you set a value on a shirt.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide bg-gray-50 border-b border-gray-100">
-                <th className="px-6 py-3">Date</th>
-                <th className="px-6 py-3">Shirt</th>
-                <th className="px-6 py-3">Price</th>
-                <th className="px-6 py-3">Source</th>
-                <th className="px-6 py-3">Notes</th>
+              <tr className="border-b border-gray-800/60">
+                {['Date', 'Shirt', 'Price', 'Source', 'Notes'].map((h) => (
+                  <th key={h} className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {filtered.map((h) => (
-                <tr key={h.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-3 text-gray-500 whitespace-nowrap">
+                <tr key={h.id} className="border-b border-gray-800/30 last:border-0 hover:bg-gray-800/30 transition-colors">
+                  <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap tabular-nums">
                     {new Date(h.recorded_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3.5">
                     {h.shirts ? (
-                      <Link to={`/shirts/${h.shirts.id}`} className="font-medium text-gray-900 hover:text-amber-600">
+                      <Link to={`/shirts/${h.shirts.id}`} className="font-medium text-gray-200 hover:text-amber-400 transition-colors">
                         {h.shirts.brand}
                       </Link>
                     ) : '—'}
                   </td>
-                  <td className="px-6 py-3 font-semibold text-amber-600">{fmt(h.price)}</td>
-                  <td className="px-6 py-3 text-gray-500">{h.source ?? '—'}</td>
-                  <td className="px-6 py-3 text-gray-400">{h.notes ?? '—'}</td>
+                  <td className="px-6 py-3.5 font-semibold text-amber-400 tabular-nums">{fmt(h.price)}</td>
+                  <td className="px-6 py-3.5 text-gray-500">{h.source ?? '—'}</td>
+                  <td className="px-6 py-3.5 text-gray-600">{h.notes ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -3,12 +3,23 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 
-function StatCard({ label, value, sub }) {
+function Spinner() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <p className="text-sm text-gray-500 font-medium">{label}</p>
-      <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="mt-1 text-xs text-gray-400">{sub}</p>}
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, dot = 'bg-gray-600', valueColor = 'text-gray-50' }) {
+  return (
+    <div className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6 hover:border-gray-700/80 transition-colors group">
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`w-1.5 h-1.5 rounded-full ${dot} flex-shrink-0`} />
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">{label}</p>
+      </div>
+      <p className={`text-3xl font-bold tracking-tight tabular-nums ${valueColor}`}>{value}</p>
+      {sub && <p className="mt-1.5 text-xs text-gray-600">{sub}</p>}
     </div>
   );
 }
@@ -43,75 +54,119 @@ export default function Dashboard() {
 
   const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const gain = stats.totalValue - stats.totalCost;
+  const gainPositive = gain >= 0;
 
-  if (loading) return <p className="text-gray-400">Loading…</p>;
+  if (loading) return <Spinner />;
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Your collection at a glance</p>
+        <h1 className="text-2xl font-bold text-gray-50 tracking-tight">Dashboard</h1>
+        <p className="text-gray-500 mt-1 text-sm">Your collection at a glance</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Shirts" value={stats.count} />
-        <StatCard label="Total Cost" value={fmt(stats.totalCost)} />
-        <StatCard label="Est. Value" value={fmt(stats.totalValue)} />
+        <StatCard
+          label="Total Shirts"
+          value={stats.count}
+          dot="bg-amber-400"
+        />
+        <StatCard
+          label="Total Cost"
+          value={fmt(stats.totalCost)}
+          dot="bg-gray-500"
+          valueColor="text-gray-200"
+        />
+        <StatCard
+          label="Est. Value"
+          value={fmt(stats.totalValue)}
+          dot="bg-amber-500"
+          valueColor="text-amber-400"
+        />
         <StatCard
           label="Unrealized Gain"
           value={fmt(gain)}
+          dot={gainPositive ? 'bg-emerald-500' : 'bg-red-500'}
+          valueColor={gainPositive ? 'text-emerald-400' : 'text-red-400'}
           sub={stats.totalCost > 0 ? `${((gain / stats.totalCost) * 100).toFixed(1)}% ROI` : undefined}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent additions */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Recent Additions</h2>
-            <Link to="/collection" className="text-sm text-amber-600 hover:underline">View all</Link>
+        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-gray-100">Recent Additions</h2>
+            <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
+              View all →
+            </Link>
           </div>
           {recent.length === 0 ? (
-            <p className="text-gray-400 text-sm">No shirts yet. <Link to="/shirts/new" className="text-amber-600 hover:underline">Add one</Link></p>
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">No shirts yet.</p>
+              <Link to="/shirts/new" className="text-amber-400 hover:text-amber-300 text-sm mt-1 inline-block transition-colors">
+                Add your first shirt →
+              </Link>
+            </div>
           ) : (
-            <ul className="divide-y divide-gray-50">
+            <ul className="space-y-0.5">
               {recent.map((s) => (
-                <li key={s.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <Link to={`/shirts/${s.id}`} className="font-medium text-gray-900 hover:text-amber-600">{s.brand}</Link>
-                    <p className="text-xs text-gray-400 capitalize">{s.style?.replace('_', ' ')}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <ConditionBadge condition={s.condition} />
-                    <span className="text-sm font-semibold text-gray-700">{s.current_value ? fmt(s.current_value) : '—'}</span>
-                  </div>
+                <li key={s.id}>
+                  <Link
+                    to={`/shirts/${s.id}`}
+                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-800/60 transition-colors group"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-200 group-hover:text-amber-400 transition-colors text-sm truncate">{s.brand}</p>
+                      <p className="text-xs text-gray-600 capitalize mt-0.5">{s.style?.replace('_', ' ')}</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                      <ConditionBadge condition={s.condition} />
+                      <span className="text-sm font-semibold text-amber-400 tabular-nums w-20 text-right">
+                        {s.current_value ? fmt(s.current_value) : '—'}
+                      </span>
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        {/* Top value */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Most Valuable</h2>
-            <Link to="/collection" className="text-sm text-amber-600 hover:underline">View all</Link>
+        {/* Most valuable */}
+        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-gray-100">Most Valuable</h2>
+            <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
+              View all →
+            </Link>
           </div>
           {topValue.length === 0 ? (
-            <p className="text-gray-400 text-sm">No valued shirts yet.</p>
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">No valued shirts yet.</p>
+            </div>
           ) : (
-            <ul className="divide-y divide-gray-50">
+            <ul className="space-y-0.5">
               {topValue.map((s, i) => (
-                <li key={s.id} className="py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 text-center text-sm font-bold text-gray-300">#{i + 1}</span>
-                    <div>
-                      <Link to={`/shirts/${s.id}`} className="font-medium text-gray-900 hover:text-amber-600">{s.brand}</Link>
-                      <p className="text-xs text-gray-400 capitalize">{s.style?.replace('_', ' ')}</p>
+                <li key={s.id}>
+                  <Link
+                    to={`/shirts/${s.id}`}
+                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-800/60 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs font-bold text-gray-700 w-5 text-center flex-shrink-0">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-200 group-hover:text-amber-400 transition-colors text-sm truncate">{s.brand}</p>
+                        <p className="text-xs text-gray-600 capitalize mt-0.5">{s.style?.replace('_', ' ')}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-sm font-semibold text-amber-600">{s.current_value ? fmt(s.current_value) : '—'}</span>
+                    <span className="text-sm font-bold text-amber-400 tabular-nums flex-shrink-0 ml-3">
+                      {s.current_value ? fmt(s.current_value) : '—'}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

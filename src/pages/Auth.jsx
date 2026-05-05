@@ -35,7 +35,6 @@ export default function Auth() {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        // Email confirmation disabled in project settings — signed in immediately
         navigate(from, { replace: true });
       } else {
         setInfo('Account created! Check your email to confirm, then sign in.');
@@ -54,17 +53,24 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 bg-radial-amber pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-sm relative">
+        {/* Brand */}
         <div className="text-center mb-8">
-          <div className="text-5xl">&#128085;</div>
-          <h1 className="mt-3 text-2xl font-bold text-gray-900">Vintage Shirt Vault</h1>
-          <p className="mt-1 text-sm text-gray-500">Your personal collection tracker</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-900 rounded-2xl border border-gray-800 shadow-glow-sm mb-4 text-3xl">
+            👕
+          </div>
+          <h1 className="text-2xl font-bold text-gray-50 tracking-tight">Tag Charting</h1>
+          <p className="mt-1.5 text-sm text-gray-500">Your personal collection tracker</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-gray-900 rounded-2xl border border-gray-800/60 p-8 shadow-glow-sm">
           {/* Mode toggle */}
-          <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+          <div className="flex rounded-xl bg-gray-800/60 p-1 mb-7 gap-1">
             {[
               { key: 'signin', label: 'Sign in' },
               { key: 'signup', label: 'Create account' },
@@ -73,10 +79,10 @@ export default function Auth() {
                 key={key}
                 type="button"
                 onClick={() => switchMode(key)}
-                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   mode === key
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gray-700 text-gray-100 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 {label}
@@ -85,8 +91,8 @@ export default function Auth() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
               <input
                 type="email"
                 required
@@ -94,12 +100,12 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Password</label>
               <input
                 type="password"
                 required
@@ -107,21 +113,25 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={mode === 'signup' ? 'Min. 6 characters' : '••••••••'}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+              <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                {error}
+              </div>
             )}
             {info && (
-              <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">{info}</p>
+              <div className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                {info}
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="w-full py-2.5 mt-1 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 font-semibold rounded-xl transition-all duration-150 disabled:opacity-40 shadow-glow-sm hover:shadow-glow"
             >
               {loading ? '…' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </button>
