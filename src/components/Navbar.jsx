@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { TagIcon } from './Logo';
 
 const links = [
   { to: '/',              label: 'Dashboard' },
@@ -21,7 +22,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-gray-800/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-15 py-3">
         <NavLink to="/" className="flex items-center gap-2.5 font-bold text-base tracking-tight group">
-          <span className="text-2xl leading-none">👕</span>
+          <TagIcon size={26} />
           <span className="text-gray-100 group-hover:text-amber-400 transition-colors">Tag Charting</span>
         </NavLink>
 
