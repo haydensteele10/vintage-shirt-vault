@@ -115,13 +115,34 @@ function Spinner() {
   );
 }
 
-function ChartTooltip({ active, payload, label, rangeKey }) {
+function ChartTooltip({ active, payload, label, rangeKey, privacyMode }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-gray-800 border border-gray-700/80 rounded-xl px-4 py-3 shadow-2xl">
       <p className="text-xs text-gray-500 mb-1">{formatTooltipDate(label, rangeKey)}</p>
-      <p className="text-sm font-bold text-amber-400 tabular-nums">{fmtUsd(payload[0].value)}</p>
+      <p className="text-sm font-bold text-amber-400 tabular-nums">
+        {privacyMode ? '••••••' : fmtUsd(payload[0].value)}
+      </p>
     </div>
+  );
+}
+
+const MASK = '••••••';
+
+function EyeIcon() {
+  return (
+    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
+}
+
+function EyeSlashIcon() {
+  return (
+    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+    </svg>
   );
 }
 
@@ -134,6 +155,16 @@ export default function Dashboard() {
   const [topValue,    setTopValue]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [selectedRange, setSelectedRange] = useState(RANGES.find(r => r.key === 'MAX'));
+  const [privacyMode,   setPrivacyMode]   = useState(
+    () => localStorage.getItem('privacyMode') === 'true',
+  );
+
+  function togglePrivacy() {
+    setPrivacyMode((prev) => {
+      localStorage.setItem('privacyMode', String(!prev));
+      return !prev;
+    });
+  }
 
   useEffect(() => {
     async function load() {
@@ -195,16 +226,25 @@ export default function Dashboard() {
 
           {/* Big value */}
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-            <span className="text-5xl sm:text-6xl font-bold text-gray-50 tracking-tight tabular-nums leading-none">
-              {fmtUsd(totalValue)}
-            </span>
+            <button
+              onClick={togglePrivacy}
+              aria-label={privacyMode ? 'Show portfolio value' : 'Hide portfolio value'}
+              className="flex items-center gap-2.5 group focus:outline-none"
+            >
+              <span className="text-5xl sm:text-6xl font-bold text-gray-50 tracking-tight tabular-nums leading-none select-none">
+                {privacyMode ? MASK : fmtUsd(totalValue)}
+              </span>
+              <span className="text-gray-600 group-hover:text-gray-400 transition-colors duration-150 mb-1 flex-shrink-0">
+                {privacyMode ? <EyeSlashIcon /> : <EyeIcon />}
+              </span>
+            </button>
 
             {/* Range gain pill */}
             <div className={`flex items-center gap-1.5 mb-1 text-sm font-semibold tabular-nums ${gainUp ? 'text-emerald-400' : 'text-red-400'}`}>
               <span className="text-base leading-none">{gainUp ? '▲' : '▼'}</span>
-              <span>{fmtUsd(Math.abs(rangeGain))}</span>
+              <span>{privacyMode ? MASK : fmtUsd(Math.abs(rangeGain))}</span>
               <span className="font-medium">
-                ({gainUp ? '+' : ''}{rangeGainPct.toFixed(2)}%)
+                ({gainUp ? '+' : ''}{privacyMode ? '••%' : `${rangeGainPct.toFixed(2)}%`})
               </span>
               <span className="text-gray-600 font-normal ml-0.5 text-xs">
                 {selectedRange.key === 'MAX' ? 'all time' : `past ${selectedRange.label}`}
@@ -219,11 +259,13 @@ export default function Dashboard() {
               shirt{shirtCount !== 1 ? 's' : ''}
             </span>
             <span>
-              <span className="text-gray-400 font-semibold">{fmtUsd(totalCost)}</span>{' '}
+              <span className="text-gray-400 font-semibold">
+                {privacyMode ? MASK : fmtUsd(totalCost)}
+              </span>{' '}
               cost basis
             </span>
             <span className={`font-semibold ${allTimeGainPct >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-              {allTimeGainPct >= 0 ? '+' : ''}{allTimeGainPct.toFixed(1)}% all-time return
+              {privacyMode ? '••%' : `${allTimeGainPct >= 0 ? '+' : ''}${allTimeGainPct.toFixed(1)}%`} all-time return
             </span>
           </div>
         </div>
@@ -290,7 +332,7 @@ export default function Dashboard() {
                 />
 
                 <Tooltip
-                  content={<ChartTooltip rangeKey={selectedRange.key} />}
+                  content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
                   cursor={{ stroke: '#374151', strokeWidth: 1 }}
                 />
 
@@ -370,11 +412,11 @@ export default function Dashboard() {
                         </div>
 
                         <span className="text-sm font-bold text-gray-100 tabular-nums text-right">
-                          {fmtUsd(s.current_value)}
+                          {privacyMode ? MASK : fmtUsd(s.current_value)}
                         </span>
 
                         <span className={`text-xs font-bold tabular-nums text-right ${up ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {pct != null ? `${up ? '+' : ''}${pct.toFixed(1)}%` : '—'}
+                          {privacyMode ? '••%' : (pct != null ? `${up ? '+' : ''}${pct.toFixed(1)}%` : '—')}
                         </span>
                       </Link>
                     </li>
