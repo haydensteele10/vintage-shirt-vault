@@ -14,9 +14,24 @@ const SORTS = [
 
 const selectCls = 'bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all appearance-none cursor-pointer';
 
+function timeAgo(iso) {
+  if (!iso) return null;
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60)    return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)     return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30)    return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12)  return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
 function ShirtCard({ shirt }) {
   const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   const photo = shirt.photos?.find((p) => p.slot === 'front') ?? shirt.photos?.[0];
+  const checkedLabel = timeAgo(shirt.price_last_checked);
 
   return (
     <Link
@@ -58,6 +73,9 @@ function ShirtCard({ shirt }) {
             {shirt.current_value ? fmt(shirt.current_value) : ''}
           </span>
         </div>
+        {checkedLabel && (
+          <p className="text-[10px] text-gray-700 tabular-nums">Checked {checkedLabel}</p>
+        )}
       </div>
     </Link>
   );
@@ -76,7 +94,7 @@ export default function Collection() {
       setLoading(true);
       let q = supabase
         .from('shirts')
-        .select('id, brand, era, style, size, condition, current_value, photos, created_at, purchase_price');
+        .select('id, brand, era, style, size, condition, current_value, photos, created_at, purchase_price, price_last_checked');
 
       if (styleFilter) q = q.eq('style', styleFilter);
       if (conditionFilter) q = q.eq('condition', conditionFilter);

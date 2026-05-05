@@ -156,6 +156,10 @@ export default function AddEditShirt() {
         current_value: data.current_value ?? '',
         valuation_notes: data.valuation_notes ?? '',
         notes: data.notes ?? '',
+        tour_or_event: data.tour_or_event ?? '',
+        graphic_keywords: data.graphic_keywords ?? '',
+        sport: data.sport ?? '',
+        location: data.location ?? '',
       });
       const photoMap = {};
       (data.photos ?? []).forEach((p) => { photoMap[p.slot] = p.url; });
@@ -272,6 +276,10 @@ export default function AddEditShirt() {
       current_value: form.current_value !== '' ? parseFloat(form.current_value) : null,
       valuation_notes: form.valuation_notes.trim() || null,
       notes: form.notes.trim() || null,
+      tour_or_event: form.tour_or_event.trim() || null,
+      graphic_keywords: form.graphic_keywords.trim() || null,
+      sport: form.sport.trim() || null,
+      location: form.location.trim() || null,
     };
 
     const { data: saved, error: saveError } = isEdit
