@@ -185,12 +185,11 @@ export default function AddEditShirt() {
     setEbayListings([]);
     setEbayQuery('');
     try {
-      const { listings, query } = await searchEbaySoldListings({ brand, style, era, year, tour_or_event, graphic_keywords, sport, location });
+      const { listings, query, avgPrice } = await searchEbaySoldListings({ brand, style, era, year, tour_or_event, graphic_keywords, sport, location });
       setEbayListings(listings);
       setEbayQuery(query);
-      if (listings.length > 0) {
-        const avg = listings.reduce((sum, l) => sum + l.price, 0) / listings.length;
-        setForm((f) => ({ ...f, current_value: avg.toFixed(2) }));
+      if (avgPrice != null) {
+        setForm((f) => ({ ...f, current_value: avgPrice.toFixed(2) }));
       }
     } catch (err) {
       setEbayError('eBay search failed — check your API credentials.');
@@ -515,53 +514,111 @@ export default function AddEditShirt() {
             </div>
           </div>
 
-          {/* eBay sold comps results */}
+          {/* eBay comps results */}
           {ebayError && (
             <div className="mt-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
               {ebayError}
             </div>
           )}
-          {ebayListings.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
-                  Sold comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
-                </p>
-                <span className="text-xs text-amber-400 font-semibold whitespace-nowrap">
-                  Avg ${(ebayListings.reduce((s, l) => s + l.price, 0) / ebayListings.length).toFixed(2)} → auto-filled
-                </span>
-              </div>
-              <div className="space-y-2">
-                {ebayListings.map((listing, i) => (
-                  <a
-                    key={i}
-                    href={listing.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-gray-800/60 hover:bg-gray-800 border border-gray-700/50 hover:border-gray-600/60 rounded-xl transition-all group"
-                  >
-                    {listing.image ? (
-                      <img src={listing.image} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-700 flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-200 leading-snug line-clamp-2">{listing.title}</p>
+          {ebayListings.length > 0 && (() => {
+            const kept     = ebayListings.filter((l) => l.kept);
+            const filtered = ebayListings.filter((l) => !l.kept);
+            const avg      = kept.length > 0
+              ? kept.reduce((s, l) => s + l.price, 0) / kept.length
+              : null;
+
+            return (
+              <div className="mt-4 space-y-3">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
+                    eBay comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
+                  </p>
+                  <span className="text-xs font-semibold whitespace-nowrap text-amber-400">
+                    {avg != null
+                      ? `Avg $${avg.toFixed(2)} · ${kept.length}/${ebayListings.length} vintage`
+                      : `${ebayListings.length} comps — all filtered`}
+                  </span>
+                </div>
+
+                {/* Kept listings */}
+                {kept.length > 0 && (
+                  <div className="space-y-1.5">
+                    {kept.map((listing, i) => (
+                      <a
+                        key={`kept-${i}`}
+                        href={listing.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 bg-gray-800/60 hover:bg-gray-800 border border-emerald-800/30 hover:border-emerald-700/50 rounded-xl transition-all group"
+                      >
+                        {listing.image ? (
+                          <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-lg bg-gray-700 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md leading-none">✓ Vintage</span>
+                          </div>
+                          <p className="text-sm text-gray-200 leading-snug line-clamp-2">{listing.title}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-amber-400 font-bold text-sm tabular-nums">${listing.price.toFixed(2)}</span>
+                          <svg className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                {/* Filtered listings */}
+                {filtered.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="flex-1 h-px bg-gray-800" />
+                      <span className="text-[10px] font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                        Filtered by AI · excluded from avg
+                      </span>
+                      <div className="flex-1 h-px bg-gray-800" />
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-amber-400 font-bold text-sm">${listing.price.toFixed(2)}</span>
-                      <svg className="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </div>
-                  </a>
-                ))}
+                    {filtered.map((listing, i) => (
+                      <a
+                        key={`filtered-${i}`}
+                        href={listing.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 bg-gray-900/40 border border-gray-800/40 rounded-xl transition-all group opacity-55 hover:opacity-80"
+                      >
+                        {listing.image ? (
+                          <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700 grayscale" />
+                        ) : (
+                          <div className="w-11 h-11 rounded-lg bg-gray-700/50 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[10px] font-semibold text-red-400/80 bg-red-500/10 px-1.5 py-0.5 rounded-md leading-none">✕ Filtered</span>
+                          </div>
+                          <p className="text-sm text-gray-500 leading-snug line-clamp-2">{listing.title}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-gray-600 font-bold text-sm tabular-nums line-through">${listing.price.toFixed(2)}</span>
+                          <svg className="w-3.5 h-3.5 text-gray-700 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
           {!ebaySearching && !ebayError && ebayListings.length === 0 && ebayQuery && (
             <div className="mt-4 text-sm text-gray-500 bg-gray-800/40 border border-gray-700/40 rounded-xl px-4 py-3 text-center">
-              No sold listings found for "{ebayQuery}"
+              No listings found for "{ebayQuery}"
             </div>
           )}
 
