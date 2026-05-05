@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { searchEbaySoldListings } from '../lib/ebay';
 
 const STYLES = [
   { value: 'band_tee',  label: 'Band Tee' },
@@ -128,6 +129,11 @@ export default function AddEditShirt() {
   const [uploadProgress, setUploadProgress] = useState('');
   const [error, setError] = useState(null);
 
+  const [ebayListings, setEbayListings] = useState([]);
+  const [ebaySearching, setEbaySearching] = useState(false);
+  const [ebayQuery, setEbayQuery] = useState('');
+  const [ebayError, setEbayError] = useState(null);
+
   useEffect(() => {
     if (!isEdit) return;
     supabase.from('shirts').select('*').eq('id', id).single().then(({ data }) => {
@@ -157,6 +163,31 @@ export default function AddEditShirt() {
 
   function set(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  }
+
+  async function searchEbay() {
+    setEbaySearching(true);
+    setEbayError(null);
+    setEbayListings([]);
+    setEbayQuery('');
+    try {
+      const { listings, query } = await searchEbaySoldListings({
+        brand: form.brand,
+        style: form.style,
+        era: form.era,
+        year: form.year,
+      });
+      setEbayListings(listings);
+      setEbayQuery(query);
+      if (listings.length > 0) {
+        const avg = listings.reduce((sum, l) => sum + l.price, 0) / listings.length;
+        setForm((f) => ({ ...f, current_value: avg.toFixed(2) }));
+      }
+    } catch (err) {
+      setEbayError('eBay search failed — check your API credentials.');
+    } finally {
+      setEbaySearching(false);
+    }
   }
 
   function handleFileSelect(slotKey, file) {
@@ -340,12 +371,86 @@ export default function AddEditShirt() {
             <Field label="Purchase Date">
               <input type="date" value={form.purchase_date} onChange={set('purchase_date')} className={`${inputCls} [color-scheme:dark]`} />
             </Field>
-            <div className="col-span-2 sm:col-span-1">
-              <Field label="Current Est. Value ($)">
-                <input type="number" step="0.01" value={form.current_value} onChange={set('current_value')} className={inputCls} placeholder="0.00" min="0" />
-              </Field>
+            <Field label="Current Est. Value ($)">
+              <input type="number" step="0.01" value={form.current_value} onChange={set('current_value')} className={inputCls} placeholder="0.00" min="0" />
+            </Field>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={searchEbay}
+                disabled={!form.brand || ebaySearching}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+              >
+                {ebaySearching ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Searching…
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search eBay
+                  </>
+                )}
+              </button>
             </div>
           </div>
+
+          {/* eBay sold comps results */}
+          {ebayError && (
+            <div className="mt-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              {ebayError}
+            </div>
+          )}
+          {ebayListings.length > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
+                  Sold comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
+                </p>
+                <span className="text-xs text-amber-400 font-semibold whitespace-nowrap">
+                  Avg ${(ebayListings.reduce((s, l) => s + l.price, 0) / ebayListings.length).toFixed(2)} → auto-filled
+                </span>
+              </div>
+              <div className="space-y-2">
+                {ebayListings.map((listing, i) => (
+                  <a
+                    key={i}
+                    href={listing.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-gray-800/60 hover:bg-gray-800 border border-gray-700/50 hover:border-gray-600/60 rounded-xl transition-all group"
+                  >
+                    {listing.image ? (
+                      <img src={listing.image} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-gray-700 flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-200 leading-snug line-clamp-2">{listing.title}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-amber-400 font-bold text-sm">${listing.price.toFixed(2)}</span>
+                      <svg className="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {!ebaySearching && !ebayError && ebayListings.length === 0 && ebayQuery && (
+            <div className="mt-4 text-sm text-gray-500 bg-gray-800/40 border border-gray-700/40 rounded-xl px-4 py-3 text-center">
+              No sold listings found for "{ebayQuery}"
+            </div>
+          )}
+
           <div className="mt-4">
             <Field label="Valuation Notes">
               <textarea value={form.valuation_notes} onChange={set('valuation_notes')} rows={2} className={inputCls} placeholder="Sources, comp sales, reasoning…" />
