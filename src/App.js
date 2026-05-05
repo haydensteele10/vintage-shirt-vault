@@ -8,6 +8,7 @@ import Collection from './pages/Collection';
 import ShirtDetail from './pages/ShirtDetail';
 import AddEditShirt from './pages/AddEditShirt';
 import PriceHistory from './pages/PriceHistory';
+import Profile from './pages/Profile';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="shirts/:id" element={<ShirtDetail />} />
               <Route path="shirts/:id/edit" element={<AddEditShirt />} />
               <Route path="price-history" element={<PriceHistory />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

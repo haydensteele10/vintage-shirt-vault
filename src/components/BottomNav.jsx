@@ -27,80 +27,61 @@ function PriceHistoryIcon() {
   );
 }
 
-const navItems = [
-  { to: '/',              label: 'Home',    Icon: HomeIcon,         end: true  },
-  { to: '/collection',   label: 'Collection', Icon: CollectionIcon, end: false },
-  { to: '/price-history', label: 'History', Icon: PriceHistoryIcon, end: false },
-];
+function ProfileIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+}
+
+function Tab({ to, end, label, Icon }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `flex flex-col items-center gap-1 px-3 py-3 text-[10px] font-medium transition-colors min-w-0 flex-1 ${
+          isActive ? 'text-amber-400' : 'text-gray-500 active:text-gray-300'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon />
+          <span>{label}</span>
+        </>
+      )}
+    </NavLink>
+  );
+}
 
 export default function BottomNav() {
   return (
-    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/60">
-      <div className="flex items-end justify-around px-2 pb-safe">
-        {/* Home */}
-        <NavLink
-          to={navItems[0].to}
-          end={navItems[0].end}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 px-4 py-3 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-amber-400' : 'text-gray-500 hover:text-gray-300'
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <HomeIcon />
-              <span className={isActive ? 'text-amber-400' : ''}>{navItems[0].label}</span>
-            </>
-          )}
-        </NavLink>
+    <nav
+      className="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/60"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="flex items-end">
+        <Tab to="/"              end label="Home"       Icon={HomeIcon} />
+        <Tab to="/collection"        label="Collection" Icon={CollectionIcon} />
 
-        {/* Collection */}
-        <NavLink
-          to={navItems[1].to}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 px-4 py-3 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-amber-400' : 'text-gray-500 hover:text-gray-300'
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <CollectionIcon />
-              <span className={isActive ? 'text-amber-400' : ''}>{navItems[1].label}</span>
-            </>
-          )}
-        </NavLink>
-
-        {/* Add Shirt — center FAB */}
-        <NavLink
-          to="/shirts/new"
-          className="flex flex-col items-center gap-1 px-4 py-2 text-[10px] font-medium text-gray-500"
-        >
-          <span className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 shadow-lg shadow-amber-500/30 transition-all ring-4 ring-gray-950">
+        {/* Center FAB */}
+        <div className="flex flex-col items-center gap-1 px-3 py-2 text-[10px] font-medium text-gray-500 flex-1">
+          <NavLink
+            to="/shirts/new"
+            className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 shadow-lg shadow-amber-500/30 ring-4 ring-gray-950 transition-colors"
+            aria-label="Add shirt"
+          >
             <svg className="w-6 h-6 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-          </span>
+          </NavLink>
           <span className="mt-0.5">Add</span>
-        </NavLink>
+        </div>
 
-        {/* Price History */}
-        <NavLink
-          to={navItems[2].to}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 px-4 py-3 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-amber-400' : 'text-gray-500 hover:text-gray-300'
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <PriceHistoryIcon />
-              <span className={isActive ? 'text-amber-400' : ''}>{navItems[2].label}</span>
-            </>
-          )}
-        </NavLink>
+        <Tab to="/price-history"     label="History"    Icon={PriceHistoryIcon} />
+        <Tab to="/profile"           label="Profile"    Icon={ProfileIcon} />
       </div>
     </nav>
   );
