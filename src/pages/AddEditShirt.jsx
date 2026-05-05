@@ -5,6 +5,36 @@ import { useAuth } from '../context/AuthContext';
 import { searchEbaySoldListings } from '../lib/ebay';
 import { analyzeShirtPhoto } from '../lib/claude';
 
+// Resize to max 800px on the longest edge and convert to WebP before upload.
+// Falls back to the original file on any canvas/codec failure.
+async function compressImage(file) {
+  const MAX_PX = 800;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const ratio = Math.min(1, MAX_PX / Math.max(img.width, img.height));
+      const w = Math.round(img.width * ratio);
+      const h = Math.round(img.height * ratio);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' }));
+        },
+        'image/webp',
+        0.85,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
+    img.src = objectUrl;
+  });
+}
+
 const STYLES = [
   { value: 'band_tee',  label: 'Band Tee' },
   { value: 'sports',    label: 'Sports' },
@@ -295,8 +325,9 @@ export default function AddEditShirt() {
     const uploadedPhotos = [];
 
     for (const { key, label } of pendingSlots) {
+      setUploadProgress(`Compressing ${label}…`);
+      const file = await compressImage(slots[key].pendingFile);
       setUploadProgress(`Uploading ${label}…`);
-      const file = slots[key].pendingFile;
       const path = `shirts/${shirtId}/${key}`;
 
       const { error: uploadError } = await supabase.storage

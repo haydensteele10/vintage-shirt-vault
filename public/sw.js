@@ -1,4 +1,6 @@
 const CACHE = 'tag-charting-v1';
+const IMAGE_CACHE = 'tag-charting-images-v1';
+const IMAGE_CACHE_MAX = 100;
 
 // App shell: resources we cache immediately on install
 const SHELL = [
@@ -13,11 +15,9 @@ const SHELL = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE).then((c) =>
-      // addAll fails silently for individual resources; use allSettled pattern
       Promise.allSettled(SHELL.map((url) => c.add(url)))
     )
   );
-  // Take over immediately, don't wait for existing tabs to close
   self.skipWaiting();
 });
 
@@ -25,19 +25,62 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE && k !== IMAGE_CACHE)
+          .map((k) => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
 });
+
+// Evict oldest entries when the image cache exceeds max entries.
+async function trimImageCache(cache) {
+  const keys = await cache.keys();
+  if (keys.length > IMAGE_CACHE_MAX) {
+    await Promise.all(keys.slice(0, keys.length - IMAGE_CACHE_MAX).map((k) => cache.delete(k)));
+  }
+}
 
 // ── Fetch ────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // Pass through: non-GET, cross-origin (Supabase API, fonts, etc.)
   if (request.method !== 'GET') return;
+
+  // Images (own-origin + cross-origin Supabase Storage): cache-first.
+  // Cross-origin image requests from <img> arrive as mode:'no-cors' so the
+  // response is opaque (status 0). We cache it anyway — the browser can still
+  // render opaque blobs in <img> elements.
+  if (request.destination === 'image') {
+    e.respondWith(
+      caches.open(IMAGE_CACHE).then(async (imgCache) => {
+        const cached = await imgCache.match(request);
+        if (cached) return cached;
+
+        try {
+          const response = await fetch(request);
+          // Cache both normal (ok) and opaque (cross-origin no-cors) responses.
+          if (response.ok || response.type === 'opaque') {
+            trimImageCache(imgCache);
+            imgCache.put(request, response.clone());
+          }
+          return response;
+        } catch {
+          // Offline with no cached version — return a transparent 1×1 gif
+          return new Response(
+            atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'),
+            { headers: { 'Content-Type': 'image/gif' } }
+          );
+        }
+      })
+    );
+    return;
+  }
+
+  // Pass through: non-GET cross-origin (Supabase API, auth, etc.)
   if (url.origin !== location.origin) return;
 
   // Navigation requests (HTML): network-first, fall back to cached '/'
@@ -53,14 +96,14 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Static assets (JS/CSS/images): stale-while-revalidate
+  // Static assets (JS/CSS): stale-while-revalidate
   e.respondWith(
     caches.open(CACHE).then((c) =>
       c.match(request).then((cached) => {
         const fetched = fetch(request).then((res) => {
           if (res.ok) c.put(request, res.clone());
           return res;
-        }).catch(() => cached); // offline fallback to whatever we have
+        }).catch(() => cached);
         return cached || fetched;
       })
     )

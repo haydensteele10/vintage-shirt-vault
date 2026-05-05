@@ -59,6 +59,29 @@ function PriceTrend({ current, purchase }) {
   );
 }
 
+// ─── Lazy image with blur-out placeholder ─────────────────────────────────────
+
+function LazyShirtImage({ src, alt, imgClassName, style }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className={`w-full h-full ${imgClassName}`}
+        style={style}
+        onLoad={() => setLoaded(true)}
+      />
+      <div
+        className="absolute inset-0 bg-gray-800 animate-pulse pointer-events-none transition-opacity duration-700"
+        style={{ opacity: loaded ? 0 : 1 }}
+      />
+    </>
+  );
+}
+
 // ─── Card views ───────────────────────────────────────────────────────────────
 
 function ShirtCard({ shirt }) {
@@ -73,10 +96,10 @@ function ShirtCard({ shirt }) {
     >
       <div className="aspect-square bg-gray-800 relative overflow-hidden">
         {photo ? (
-          <img
+          <LazyShirtImage
             src={photo.url}
             alt={shirt.brand}
-            className="w-full h-full object-cover scale-[1.15] group-hover:scale-[1.22] transition-transform duration-500 ease-out"
+            imgClassName="object-cover scale-[1.15] group-hover:scale-[1.22] transition-transform duration-500 ease-out"
             style={{ objectPosition: 'center 30%' }}
           />
         ) : (
@@ -123,10 +146,10 @@ function WallTile({ shirt }) {
   return (
     <Link to={`/shirts/${shirt.id}`} className="group block relative aspect-square overflow-hidden bg-gray-900">
       {photo ? (
-        <img
+        <LazyShirtImage
           src={photo.url}
           alt={shirt.brand}
-          className="w-full h-full object-cover scale-[1.12] group-hover:scale-[1.18] transition-transform duration-500 ease-out"
+          imgClassName="object-cover scale-[1.12] group-hover:scale-[1.18] transition-transform duration-500 ease-out"
           style={{ objectPosition: 'center 30%' }}
         />
       ) : (
@@ -193,6 +216,15 @@ export default function Collection() {
   const [conditionFilter, setConditionFilter] = useState('');
   const [sort, setSort] = useState('created_at:desc');
   const [view, setView] = useState('grid'); // 'grid' | 'wall'
+
+  // Preload all front-photo URLs into the browser HTTP cache so lazy images
+  // appear instantly when they scroll into view.
+  useEffect(() => {
+    shirts.forEach((shirt) => {
+      const photo = shirt.photos?.find((p) => p.slot === 'front') ?? shirt.photos?.[0];
+      if (photo?.url) { const i = new Image(); i.src = photo.url; }
+    });
+  }, [shirts]);
 
   useEffect(() => {
     async function load() {
