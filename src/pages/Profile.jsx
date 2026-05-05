@@ -14,16 +14,6 @@ const STYLE_LABELS = {
 const fmt = (n) =>
   `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-function StatCell({ label, value, accent }) {
-  return (
-    <div className="flex flex-col items-center gap-1 p-4">
-      <span className={`text-xl font-bold tabular-nums ${accent ? 'text-amber-400' : 'text-gray-100'}`}>
-        {value}
-      </span>
-      <span className="text-[11px] text-gray-500 text-center leading-tight">{label}</span>
-    </div>
-  );
-}
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -95,20 +85,30 @@ export default function Profile() {
           </div>
         ) : stats ? (
           <>
-            {/* Stats grid */}
-            <div className="grid grid-cols-4 divide-x divide-gray-800/60 border-b border-gray-800/60">
-              <StatCell label="Shirts"       value={stats.count}                 accent={false} />
-              <StatCell label="Value"        value={fmt(stats.totalValue)}        accent />
-              <StatCell label="Cost basis"   value={fmt(stats.totalCost)}         accent={false} />
-              <StatCell
-                label="All-time return"
-                value={
-                  stats.gainPct != null
+            {/* Stats grid — 2×2 on mobile, 1×4 on sm+ */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-gray-800/60">
+              <div className="flex flex-col items-center gap-1 p-4 border-r border-b sm:border-b-0 border-gray-800/60">
+                <span className="text-xl font-bold tabular-nums text-gray-100">{stats.count}</span>
+                <span className="text-[11px] text-gray-500 text-center leading-tight">Shirts</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-4 border-b sm:border-b-0 sm:border-r border-gray-800/60">
+                <span className="text-xl font-bold tabular-nums text-amber-400">{fmt(stats.totalValue)}</span>
+                <span className="text-[11px] text-gray-500 text-center leading-tight">Value</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-4 border-r border-gray-800/60">
+                <span className="text-xl font-bold tabular-nums text-gray-100">{fmt(stats.totalCost)}</span>
+                <span className="text-[11px] text-gray-500 text-center leading-tight">Cost basis</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-4">
+                <span className={`text-xl font-bold tabular-nums ${
+                  stats.gainPct == null ? 'text-gray-100' : stats.gainPct >= 0 ? 'text-emerald-400' : 'text-red-400'
+                }`}>
+                  {stats.gainPct != null
                     ? `${stats.gainPct >= 0 ? '+' : ''}${stats.gainPct.toFixed(1)}%`
-                    : '—'
-                }
-                accent={false}
-              />
+                    : '—'}
+                </span>
+                <span className="text-[11px] text-gray-500 text-center leading-tight">All-time return</span>
+              </div>
             </div>
 
             {/* Style breakdown */}

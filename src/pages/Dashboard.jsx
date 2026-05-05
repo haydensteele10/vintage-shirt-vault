@@ -322,7 +322,7 @@ export default function Dashboard() {
 
         {/* Most Valuable */}
         <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/60">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
             <h2 className="font-semibold text-gray-100 text-sm">Most Valuable</h2>
             <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
               View all →
@@ -336,7 +336,7 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Table header */}
-              <div className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 px-6 py-2 border-b border-gray-800/40">
+              <div className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 px-4 sm:px-6 py-2 border-b border-gray-800/40">
                 {['#', 'Shirt', 'Value', 'Gain'].map((h) => (
                   <span key={h} className="text-[10px] font-semibold text-gray-700 uppercase tracking-widest last:text-right">
                     {h}
@@ -355,7 +355,7 @@ export default function Dashboard() {
                     <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                       <Link
                         to={`/shirts/${s.id}`}
-                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
+                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 px-4 sm:px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
                       >
                         <span className="text-xs font-bold text-gray-700 text-center">{i + 1}</span>
 
@@ -387,7 +387,7 @@ export default function Dashboard() {
 
         {/* Recent Additions */}
         <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/60">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
             <h2 className="font-semibold text-gray-100 text-sm">Recent Additions</h2>
             <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
               View all →
@@ -407,7 +407,7 @@ export default function Dashboard() {
                 <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                   <Link
                     to={`/shirts/${s.id}`}
-                    className="flex items-center justify-between px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
+                    className="flex items-center justify-between px-4 sm:px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-400 transition-colors truncate leading-snug">

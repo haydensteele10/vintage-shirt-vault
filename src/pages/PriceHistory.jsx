@@ -168,29 +168,29 @@ export default function PriceHistory() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800/60">
-                {['Date', 'Shirt', 'Price', 'Source', 'Notes'].map((h) => (
-                  <th key={h} className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">
-                    {h}
-                  </th>
-                ))}
+                <th className="px-3 sm:px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">Date</th>
+                <th className="px-3 sm:px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">Shirt</th>
+                <th className="px-3 sm:px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">Price</th>
+                <th className="hidden sm:table-cell px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">Source</th>
+                <th className="hidden sm:table-cell px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-widest">Notes</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((h) => (
                 <tr key={h.id} className="border-b border-gray-800/30 last:border-0 hover:bg-gray-800/30 transition-colors">
-                  <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap tabular-nums">
+                  <td className="px-3 sm:px-6 py-3.5 text-gray-500 whitespace-nowrap tabular-nums text-xs sm:text-sm">
                     {new Date(h.recorded_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-3 sm:px-6 py-3.5 max-w-[120px] sm:max-w-none">
                     {h.shirts ? (
-                      <Link to={`/shirts/${h.shirts.id}`} className="font-medium text-gray-200 hover:text-amber-400 transition-colors">
+                      <Link to={`/shirts/${h.shirts.id}`} className="font-medium text-gray-200 hover:text-amber-400 transition-colors truncate block">
                         {h.shirts.brand}
                       </Link>
                     ) : '—'}
                   </td>
-                  <td className="px-6 py-3.5 font-semibold text-amber-400 tabular-nums">{fmt(h.price)}</td>
-                  <td className="px-6 py-3.5 text-gray-500">{h.source ?? '—'}</td>
-                  <td className="px-6 py-3.5 text-gray-600">{h.notes ?? '—'}</td>
+                  <td className="px-3 sm:px-6 py-3.5 font-semibold text-amber-400 tabular-nums text-xs sm:text-sm whitespace-nowrap">{fmt(h.price)}</td>
+                  <td className="hidden sm:table-cell px-6 py-3.5 text-gray-500">{h.source ?? '—'}</td>
+                  <td className="hidden sm:table-cell px-6 py-3.5 text-gray-600">{h.notes ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
