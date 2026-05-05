@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   brand: '', era: '', year: '', style: 'band_tee', size: '',
   condition: 'Excellent', purchase_price: '', purchase_date: '',
   current_value: '', valuation_notes: '', notes: '',
+  tour_or_event: '', graphic_keywords: '', sport: '', location: '',
 };
 
 const EMPTY_SLOTS = {
@@ -172,13 +173,13 @@ export default function AddEditShirt() {
 
   async function searchEbay(params) {
     // params lets callers pass fresh values before form state re-renders (e.g. after AI fill)
-    const { brand, style, era, year } = params ?? form;
+    const { brand, style, era, year, tour_or_event, graphic_keywords, sport, location } = params ?? form;
     setEbaySearching(true);
     setEbayError(null);
     setEbayListings([]);
     setEbayQuery('');
     try {
-      const { listings, query } = await searchEbaySoldListings({ brand, style, era, year });
+      const { listings, query } = await searchEbaySoldListings({ brand, style, era, year, tour_or_event, graphic_keywords, sport, location });
       setEbayListings(listings);
       setEbayQuery(query);
       if (listings.length > 0) {
@@ -205,14 +206,22 @@ export default function AddEditShirt() {
       const updates = {};
       const filled = [];
 
-      if (result.brand)  { updates.brand = result.brand;                                               filled.push('brand'); }
-      if (result.era)    { updates.era   = result.era;                                                 filled.push('era'); }
-      if (result.year)   { updates.year  = String(result.year);                                        filled.push('year'); }
-      if (result.style && validStyles.includes(result.style)) { updates.style = result.style;          filled.push('style'); }
+      if (result.brand)         { updates.brand           = result.brand;                             filled.push('brand'); }
+      if (result.era)           { updates.era             = result.era;                               filled.push('era'); }
+      if (result.year)          { updates.year            = String(result.year);                      filled.push('year'); }
+      if (result.style && validStyles.includes(result.style)) { updates.style = result.style;        filled.push('style'); }
+      if (result.tour_or_event)    { updates.tour_or_event   = result.tour_or_event;   filled.push('tour/event'); }
+      if (result.graphic_keywords) { updates.graphic_keywords = result.graphic_keywords; }
+      if (result.sport)            { updates.sport           = result.sport; }
+      if (result.location)         { updates.location        = result.location; }
 
       const noteParts = [
         result.graphic_description,
-        result.visible_text ? `Text: ${result.visible_text}` : null,
+        result.tour_or_event   ? `Tour/event: ${result.tour_or_event}` : null,
+        result.front_text      ? `Front text: ${result.front_text}` : null,
+        result.back_text       ? `Back text: ${result.back_text}` : null,
+        result.tag_brand       ? `Tag: ${result.tag_brand}` : null,
+        result.stitch_type     ? `Stitching: ${result.stitch_type}` : null,
         result.notes,
       ].filter(Boolean);
       if (noteParts.length > 0) { updates.notes = noteParts.join('\n'); filled.push('notes'); }
@@ -222,10 +231,14 @@ export default function AddEditShirt() {
 
       // Trigger eBay search immediately with the extracted values — can't wait for form state to settle
       await searchEbay({
-        brand: updates.brand  ?? form.brand,
-        style: updates.style  ?? form.style,
-        era:   updates.era    ?? form.era,
-        year:  updates.year   ?? form.year,
+        brand:            updates.brand            ?? form.brand,
+        style:            updates.style            ?? form.style,
+        era:              updates.era              ?? form.era,
+        year:             updates.year             ?? form.year,
+        tour_or_event:    updates.tour_or_event    ?? form.tour_or_event    ?? '',
+        graphic_keywords: updates.graphic_keywords ?? form.graphic_keywords ?? '',
+        sport:            updates.sport            ?? form.sport            ?? '',
+        location:         updates.location         ?? form.location         ?? '',
       });
     } catch (err) {
       setAiError(err.message || 'Photo analysis failed.');
