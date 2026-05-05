@@ -71,12 +71,13 @@ function ShirtCard({ shirt }) {
       to={`/shirts/${shirt.id}`}
       className="group block rounded-2xl overflow-hidden bg-gray-900 border border-gray-800/50 hover:border-amber-500/30 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300"
     >
-      <div className="aspect-[3/4] bg-gray-800 relative overflow-hidden">
+      <div className="aspect-square bg-gray-800 relative overflow-hidden">
         {photo ? (
           <img
             src={photo.url}
             alt={shirt.brand}
-            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out"
+            className="w-full h-full object-cover scale-[1.15] group-hover:scale-[1.22] transition-transform duration-500 ease-out"
+            style={{ objectPosition: 'center 30%' }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -125,7 +126,8 @@ function WallTile({ shirt }) {
         <img
           src={photo.url}
           alt={shirt.brand}
-          className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-out"
+          className="w-full h-full object-cover scale-[1.12] group-hover:scale-[1.18] transition-transform duration-500 ease-out"
+          style={{ objectPosition: 'center 30%' }}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-800">
