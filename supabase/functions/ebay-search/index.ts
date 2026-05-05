@@ -1,5 +1,7 @@
-const EBAY_APP_ID = Deno.env.get('EBAY_APP_ID') ?? ''
-const FINDING_API = 'https://svcs.ebay.com/services/search/FindingService/v1'
+const EBAY_CLIENT_ID = Deno.env.get('EBAY_APP_ID') ?? ''
+const EBAY_CLIENT_SECRET = Deno.env.get('EBAY_CLIENT_SECRET') ?? ''
+const OAUTH_URL = 'https://api.ebay.com/identity/v1/oauth2/token'
+const BROWSE_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search'
 
 const STYLE_LABELS: Record<string, string> = {
   band_tee: 'band tee',
@@ -13,6 +15,27 @@ const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
+}
+
+async function getAccessToken(): Promise<string> {
+  const credentials = btoa(`${EBAY_CLIENT_ID}:${EBAY_CLIENT_SECRET}`)
+  const res = await fetch(OAUTH_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      scope: 'https://api.ebay.com/oauth/api_scope',
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`eBay OAuth failed (${res.status}): ${body}`)
+  }
+  const { access_token } = await res.json()
+  return access_token
 }
 
 Deno.serve(async (req) => {
@@ -29,30 +52,36 @@ Deno.serve(async (req) => {
     ].filter(Boolean)
     const keywords = parts.join(' ')
 
+    const token = await getAccessToken()
+
     const params = new URLSearchParams({
-      'OPERATION-NAME': 'findCompletedItems',
-      'SERVICE-VERSION': '1.0.0',
-      'SECURITY-APPNAME': EBAY_APP_ID,
-      'RESPONSE-DATA-FORMAT': 'JSON',
-      'keywords': keywords,
-      'itemFilter(0).name': 'SoldItemsOnly',
-      'itemFilter(0).value': 'true',
-      'paginationInput.entriesPerPage': '3',
-      'sortOrder': 'EndTimeSoonest',
+      q: keywords,
+      limit: '3',
+      sort: 'price',
+      filter: 'buyingOptions:{FIXED_PRICE|AUCTION}',
     })
 
-    const res = await fetch(`${FINDING_API}?${params.toString()}`)
-    if (!res.ok) throw new Error(`eBay API responded with ${res.status}`)
+    const res = await fetch(`${BROWSE_URL}?${params}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`Browse API error (${res.status}): ${body}`)
+    }
 
     const data = await res.json()
     // deno-lint-ignore no-explicit-any
-    const items: any[] = data?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item ?? []
+    const items: any[] = data?.itemSummaries ?? []
 
     const listings = items.slice(0, 3).map((item) => ({
-      title: item.title?.[0] ?? '',
-      price: parseFloat(item.sellingStatus?.[0]?.convertedCurrentPrice?.[0]?.['__value__'] ?? '0'),
-      url: item.viewItemURL?.[0] ?? '',
-      image: item.galleryURL?.[0] ?? '',
+      title: item.title ?? '',
+      price: parseFloat(item.price?.value ?? '0'),
+      url: item.itemWebUrl ?? '',
+      image: item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? '',
     }))
 
     return new Response(JSON.stringify({ listings, query: keywords }), {

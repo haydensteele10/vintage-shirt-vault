@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { searchEbaySoldListings } from '../lib/ebay';
+import { analyzeShirtPhoto } from '../lib/claude';
 
 const STYLES = [
   { value: 'band_tee',  label: 'Band Tee' },
@@ -134,6 +135,10 @@ export default function AddEditShirt() {
   const [ebayQuery, setEbayQuery] = useState('');
   const [ebayError, setEbayError] = useState(null);
 
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const [aiFields, setAiFields] = useState([]);
+
   useEffect(() => {
     if (!isEdit) return;
     supabase.from('shirts').select('*').eq('id', id).single().then(({ data }) => {
@@ -165,18 +170,15 @@ export default function AddEditShirt() {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   }
 
-  async function searchEbay() {
+  async function searchEbay(params) {
+    // params lets callers pass fresh values before form state re-renders (e.g. after AI fill)
+    const { brand, style, era, year } = params ?? form;
     setEbaySearching(true);
     setEbayError(null);
     setEbayListings([]);
     setEbayQuery('');
     try {
-      const { listings, query } = await searchEbaySoldListings({
-        brand: form.brand,
-        style: form.style,
-        era: form.era,
-        year: form.year,
-      });
+      const { listings, query } = await searchEbaySoldListings({ brand, style, era, year });
       setEbayListings(listings);
       setEbayQuery(query);
       if (listings.length > 0) {
@@ -187,6 +189,48 @@ export default function AddEditShirt() {
       setEbayError('eBay search failed — check your API credentials.');
     } finally {
       setEbaySearching(false);
+    }
+  }
+
+  async function analyzePhoto() {
+    const file = slots.front.pendingFile;
+    if (!file) return;
+    setAiAnalyzing(true);
+    setAiError(null);
+    setAiFields([]);
+    try {
+      const result = await analyzeShirtPhoto(file);
+
+      const validStyles = STYLES.map((s) => s.value);
+      const updates = {};
+      const filled = [];
+
+      if (result.brand)  { updates.brand = result.brand;                                               filled.push('brand'); }
+      if (result.era)    { updates.era   = result.era;                                                 filled.push('era'); }
+      if (result.year)   { updates.year  = String(result.year);                                        filled.push('year'); }
+      if (result.style && validStyles.includes(result.style)) { updates.style = result.style;          filled.push('style'); }
+
+      const noteParts = [
+        result.graphic_description,
+        result.visible_text ? `Text: ${result.visible_text}` : null,
+        result.notes,
+      ].filter(Boolean);
+      if (noteParts.length > 0) { updates.notes = noteParts.join('\n'); filled.push('notes'); }
+
+      setAiFields(filled);
+      setForm((f) => ({ ...f, ...updates }));
+
+      // Trigger eBay search immediately with the extracted values — can't wait for form state to settle
+      await searchEbay({
+        brand: updates.brand  ?? form.brand,
+        style: updates.style  ?? form.style,
+        era:   updates.era    ?? form.era,
+        year:  updates.year   ?? form.year,
+      });
+    } catch (err) {
+      setAiError(err.message || 'Photo analysis failed.');
+    } finally {
+      setAiAnalyzing(false);
     }
   }
 
@@ -336,6 +380,53 @@ export default function AddEditShirt() {
               />
             ))}
           </div>
+
+          {/* AI photo analysis — only available when a new front photo is staged */}
+          {slots.front.pendingFile && (
+            <div className="mt-4 space-y-3">
+              <button
+                type="button"
+                onClick={analyzePhoto}
+                disabled={aiAnalyzing || ebaySearching}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 hover:text-violet-200 text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+              >
+                {aiAnalyzing ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Analyzing photo…
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    Analyze Photo with AI
+                  </>
+                )}
+              </button>
+
+              {aiError && (
+                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                  {aiError}
+                </div>
+              )}
+
+              {aiFields.length > 0 && !aiAnalyzing && (
+                <div className="flex items-center gap-2.5 px-4 py-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl">
+                  <svg className="w-4 h-4 text-violet-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-xs text-violet-300">
+                    AI filled <span className="font-semibold">{aiFields.join(', ')}</span> — eBay search triggered
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Condition */}
@@ -377,7 +468,7 @@ export default function AddEditShirt() {
             <div className="flex items-end">
               <button
                 type="button"
-                onClick={searchEbay}
+                onClick={() => searchEbay()}
                 disabled={!form.brand || ebaySearching}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white text-sm font-medium rounded-xl transition-all disabled:opacity-40"
               >
