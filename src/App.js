@@ -10,6 +10,7 @@ import AddEditShirt from './pages/AddEditShirt';
 import PriceHistory from './pages/PriceHistory';
 import Discover from './pages/Discover';
 import Profile from './pages/Profile';
+import TagGuide from './pages/TagGuide';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="price-history" element={<PriceHistory />} />
               <Route path="discover" element={<Discover />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="tag-guide" element={<TagGuide />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
