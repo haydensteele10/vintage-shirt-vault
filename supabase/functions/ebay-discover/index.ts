@@ -6,6 +6,13 @@ const OAUTH_URL  = 'https://api.ebay.com/identity/v1/oauth2/token'
 const BROWSE_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search'
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages'
 
+// Appended to every eBay query to push out cheap reprints and modern items
+const NEG_KEYWORDS = '-reprint -reproduction -inspired -style -new -NWT -modern -remake'
+
+function vintageQuery(base: string): string {
+  return `${base} ${NEG_KEYWORDS}`
+}
+
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -40,7 +47,7 @@ async function browseSearch(
   token: string,
   query: string,
   limit = 8,
-  minPrice = 25,
+  minPrice = 40,
   maxPrice?: number,
 ): Promise<any[]> {
   const priceRange = maxPrice != null ? `${minPrice}..${maxPrice}` : `${minPrice}..`
@@ -81,14 +88,14 @@ function mapItem(item: any) {
   }
 }
 
-// ─── AI filter ────────────────────────────────────────────────────────────────
-// Batch-filters all groups in a single Claude call for efficiency.
+// ─── AI scoring ───────────────────────────────────────────────────────────────
+// Scores every listing 1-10 for vintage authenticity in a single Claude call.
+// Items scoring < 7 are dropped; survivors are sorted highest-score-first.
 
 type RawGroup = { id: string; title: string; query: string; items: ReturnType<typeof mapItem>[] }
 type FilteredGroup = { id: string; title: string; query: string; listings: ReturnType<typeof mapItem>[] }
 
-async function batchFilterWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
-  // Flatten all items, tagging each with its group id
+async function batchScoreWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
   const tagged: (ReturnType<typeof mapItem> & { groupId: string })[] = []
   for (const group of groups) {
     for (const item of group.items) {
@@ -96,29 +103,26 @@ async function batchFilterWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
     }
   }
 
-  let keepFlags: boolean[] = tagged.map(() => true)
+  // Default: borderline pass so non-AI path still surfaces some results
+  let scores: number[] = tagged.map(() => 7)
 
   if (ANTHROPIC_API_KEY && tagged.length > 0) {
     const numbered = tagged.map((l, i) => `${i + 1}. ${l.title}`).join('\n')
 
-    const prompt = `You are a vintage clothing expert. Review these eBay listing titles and identify which ones are genuine vintage originals.
+    const prompt = `You are a vintage clothing authenticator. Score each eBay listing title 1-10 for likelihood of being an authentic vintage original.
 
-REMOVE (return false) items that are:
-- Reprints, bootlegs, modern reproductions, or licensed re-releases
-- Fan-made or tribute items
-- New/recent items described as "style" or "inspired by"
-- Missing any vintage indicators (no year, no tour, suspiciously generic)
-
-KEEP (return true) items that appear to be:
-- Authentic vintage originals from the original era
-- Items with clear vintage signals: specific year, tour dates, single stitch, screen stars, copyright lines, event-specific text
-- Items where the title matches what a genuine vintage seller would write
+SCORING GUIDE:
+9-10 — Definitely vintage: contains specific year, tour date, copyright line, or explicit material signals (single stitch, screen stars, fruit of the loom, hanes, deadstock, made in usa, paper thin, 80s, 90s)
+7-8  — Likely vintage: mentions era, has event-specific or era-specific text, or seller language matches genuine vintage listings
+5-6  — Uncertain: could be vintage or modern reprint; insufficient signals to decide
+3-4  — Probably not vintage: generic or suspicious title, missing any era or authenticity signals
+1-2  — Definitely not vintage: reprint, bootleg, modern reproduction, fan-made, or explicitly "inspired by" item
 
 Listings:
 ${numbered}
 
-Return a JSON boolean array with one value per listing (true = keep, false = remove).
-Example for 3 listings: [true, false, true]
+Return a JSON number array with one integer score per listing.
+Example for 4 listings: [9, 2, 7, 8]
 Return ONLY the JSON array, no other text.`
 
     try {
@@ -131,7 +135,7 @@ Return ONLY the JSON array, no other text.`
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1024,
+          max_tokens: 512,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -139,34 +143,32 @@ Return ONLY the JSON array, no other text.`
       if (res.ok) {
         const data = await res.json()
         const text: string = data.content?.[0]?.text ?? ''
-        console.log('[ebay-discover] AI filter response (first 120):', text.substring(0, 120))
+        console.log('[ebay-discover] AI scores (first 120):', text.substring(0, 120))
 
         const match = text.match(/\[[\s\S]*?\]/)
         if (match) {
           const arr = JSON.parse(match[0])
           if (Array.isArray(arr) && arr.length === tagged.length) {
-            keepFlags = arr.map((v) => Boolean(v))
+            scores = arr.map((v) => Number(v) || 0)
           }
         }
       } else {
-        console.warn('[ebay-discover] AI filter HTTP error:', res.status)
+        console.warn('[ebay-discover] AI score HTTP error:', res.status)
       }
     } catch (err) {
-      console.warn('[ebay-discover] AI filter error:', (err as Error).message)
+      console.warn('[ebay-discover] AI score error:', (err as Error).message)
     }
   }
 
-  // Reassemble groups
-  const byGroup = new Map<string, ReturnType<typeof mapItem>[]>()
+  // Reassemble groups: keep score >= 7, sort highest first
+  const byGroup = new Map<string, { listing: ReturnType<typeof mapItem>; score: number }[]>()
   for (const g of groups) byGroup.set(g.id, [])
 
   tagged.forEach((item, i) => {
-    if (keepFlags[i]) {
+    if (scores[i] >= 7) {
       byGroup.get(item.groupId)!.push({
-        title: item.title,
-        price: item.price,
-        url:   item.url,
-        image: item.image,
+        listing: { title: item.title, price: item.price, url: item.url, image: item.image },
+        score: scores[i],
       })
     }
   })
@@ -175,7 +177,9 @@ Return ONLY the JSON array, no other text.`
     id:       g.id,
     title:    g.title,
     query:    g.query,
-    listings: byGroup.get(g.id) ?? [],
+    listings: (byGroup.get(g.id) ?? [])
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.listing),
   }))
 }
 
@@ -267,7 +271,7 @@ Deno.serve(async (req) => {
     if (topBrands.length > 0) {
       const label = topBrands.slice(0, 2).join(' & ')
       for (const brand of topBrands.slice(0, 2)) {
-        tasks.push({ id: 'artists', title: `More from ${label}`, query: `${brand} vintage tee single stitch`, limit: 6 })
+        tasks.push({ id: 'artists', title: `More from ${label}`, query: vintageQuery(`${brand} vintage tee single stitch`), limit: 6 })
       }
     }
 
@@ -275,7 +279,7 @@ Deno.serve(async (req) => {
     if (topEra) {
       const decadeMatch = topEra.match(/\d{2}s/)
       const decade = decadeMatch ? decadeMatch[0] : topEra
-      tasks.push({ id: 'era', title: `More from the ${decade}`, query: `vintage ${decade} tee single stitch`, limit: 8 })
+      tasks.push({ id: 'era', title: `More from the ${decade}`, query: vintageQuery(`vintage ${decade} tee single stitch`), limit: 8 })
     }
 
     // 3 — Same style
@@ -283,31 +287,31 @@ Deno.serve(async (req) => {
       tasks.push({
         id: 'style',
         title: `More ${styleLabel(topStyle)}`,
-        query: `${styleQuery(topStyle)} single stitch`,
+        query: vintageQuery(`${styleQuery(topStyle)} single stitch`),
         limit: 8,
       })
     }
 
-    // 4 — In your price range (only if meaningful average exists)
-    if (avgValue && avgValue >= 25) {
-      const minP = Math.max(25, Math.round(avgValue * 0.5))
+    // 4 — In your price range (only if meaningful average exists above the min threshold)
+    if (avgValue && avgValue >= 40) {
+      const minP = Math.max(40, Math.round(avgValue * 0.5))
       const maxP = Math.round(avgValue * 1.75)
-      tasks.push({ id: 'price_range', title: 'In your price range', query: 'vintage tee single stitch', limit: 8, minPrice: minP, maxPrice: maxP })
+      tasks.push({ id: 'price_range', title: 'In your price range', query: vintageQuery('vintage tee single stitch'), limit: 8, minPrice: minP, maxPrice: maxP })
     }
 
     // 5-10 — Fixed discovery categories
     tasks.push(
-      { id: 'trending',      title: 'Trending in vintage',    query: 'vintage tee 80s 90s single stitch',      limit: 8 },
-      { id: 'single_stitch', title: 'Single stitch gems',     query: 'vintage single stitch tee',              limit: 8 },
-      { id: 'tour_tees',     title: 'Rare tour tees',         query: 'vintage tour tee concert single stitch', limit: 8 },
-      { id: 'sportswear',    title: 'Vintage sportswear',     query: 'vintage jersey sports single stitch',    limit: 8 },
-      { id: 'grails',        title: 'High value grails',      query: 'vintage rare tee deadstock',             limit: 8, minPrice: 100 },
-      { id: 'deadstock',     title: 'Deadstock finds',        query: 'deadstock vintage tee screen stars',     limit: 8 },
+      { id: 'trending',      title: 'Trending in vintage',    query: vintageQuery('vintage tee 80s 90s single stitch'),      limit: 8 },
+      { id: 'single_stitch', title: 'Single stitch gems',     query: vintageQuery('vintage single stitch tee'),              limit: 8 },
+      { id: 'tour_tees',     title: 'Rare tour tees',         query: vintageQuery('vintage tour tee concert single stitch'), limit: 8 },
+      { id: 'sportswear',    title: 'Vintage sportswear',     query: vintageQuery('vintage jersey sports single stitch'),    limit: 8 },
+      { id: 'grails',        title: 'High value grails',      query: vintageQuery('vintage rare tee deadstock'),             limit: 8, minPrice: 100 },
+      { id: 'deadstock',     title: 'Deadstock finds',        query: vintageQuery('deadstock vintage tee screen stars'),     limit: 8 },
     )
 
     // ── Run all searches in parallel ───────────────────────────────────────
     const searchResults = await Promise.all(
-      tasks.map((t) => browseSearch(token, t.query, t.limit, t.minPrice ?? 25, t.maxPrice))
+      tasks.map((t) => browseSearch(token, t.query, t.limit, t.minPrice ?? 40, t.maxPrice))
     )
 
     // Merge tasks that share the same group id (e.g., multiple brand searches → one 'artists' group)
@@ -330,8 +334,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── AI filter all results in one batch call ────────────────────────────
-    const filtered = await batchFilterWithAI(rawGroups)
+    // ── AI score all results in one batch call, drop < 7 ─────────────────
+    const filtered = await batchScoreWithAI(rawGroups)
 
     const groups = filtered
       .filter((g) => g.listings.length > 0)
