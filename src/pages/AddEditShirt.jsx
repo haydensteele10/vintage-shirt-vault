@@ -164,8 +164,11 @@ export default function AddEditShirt() {
   const [error, setError] = useState(null);
 
   const [ebayListings, setEbayListings] = useState([]);
+  const [checkedIds, setCheckedIds] = useState(new Set());
   const [ebaySearching, setEbaySearching] = useState(false);
   const [ebayQuery, setEbayQuery] = useState('');
+  const [ebayOffset, setEbayOffset] = useState(0);
+  const [ebayNoMore, setEbayNoMore] = useState(false);
   const [ebayError, setEbayError] = useState(null);
 
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
@@ -213,19 +216,50 @@ export default function AddEditShirt() {
     setEbaySearching(true);
     setEbayError(null);
     setEbayListings([]);
+    setCheckedIds(new Set());
     setEbayQuery('');
+    setEbayOffset(0);
+    setEbayNoMore(false);
     try {
-      const { listings, query, avgPrice } = await searchEbaySoldListings({ brand, style, era, year, tour_or_event, graphic_keywords, sport, location });
+      const { listings, query } = await searchEbaySoldListings({ brand, style, era, year, tour_or_event, graphic_keywords, sport, location });
       setEbayListings(listings);
       setEbayQuery(query);
-      if (avgPrice != null) {
-        setForm((f) => ({ ...f, current_value: avgPrice.toFixed(2) }));
-      }
+      setEbayOffset(listings.length);
+      setCheckedIds(new Set(listings.map((_, i) => i)));
     } catch (err) {
       setEbayError('eBay search failed — check your API credentials.');
     } finally {
       setEbaySearching(false);
     }
+  }
+
+  async function loadMore() {
+    if (!ebayQuery) return;
+    setEbaySearching(true);
+    try {
+      const { listings } = await searchEbaySoldListings({ query: ebayQuery, offset: ebayOffset });
+      if (!listings?.length) { setEbayNoMore(true); return; }
+      const startIdx = ebayListings.length;
+      setEbayListings((prev) => [...prev, ...listings]);
+      setEbayOffset((prev) => prev + listings.length);
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        listings.forEach((_, i) => next.add(startIdx + i));
+        return next;
+      });
+    } catch {
+      setEbayError('Could not load more results.');
+    } finally {
+      setEbaySearching(false);
+    }
+  }
+
+  function toggleCheck(idx) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
   }
 
   async function analyzePhoto() {
@@ -371,6 +405,11 @@ export default function AddEditShirt() {
     setSaving(false);
     navigate(`/shirts/${shirtId}`);
   }
+
+  const checkedListings = ebayListings.filter((_, i) => checkedIds.has(i));
+  const liveAvg = checkedListings.length > 0
+    ? checkedListings.reduce((s, l) => s + l.price, 0) / checkedListings.length
+    : null;
 
   const isBusy = saving;
   const buttonLabel = uploadProgress || (saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Shirt');
@@ -551,102 +590,139 @@ export default function AddEditShirt() {
               {ebayError}
             </div>
           )}
-          {ebayListings.length > 0 && (() => {
-            const kept     = ebayListings.filter((l) => l.kept);
-            const filtered = ebayListings.filter((l) => !l.kept);
-            const avg      = kept.length > 0
-              ? kept.reduce((s, l) => s + l.price, 0) / kept.length
-              : null;
-
-            return (
-              <div className="mt-4 space-y-3">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
-                    eBay comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
-                  </p>
-                  <span className="text-xs font-semibold whitespace-nowrap text-amber-400">
-                    {avg != null
-                      ? `Avg $${avg.toFixed(2)} · ${kept.length}/${ebayListings.length} vintage`
-                      : `${ebayListings.length} comps — all filtered`}
-                  </span>
+          {ebayListings.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
+                  eBay comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setCheckedIds(new Set(ebayListings.map((_, i) => i)))}
+                    className="text-xs text-gray-600 hover:text-amber-400 transition-colors"
+                  >
+                    All
+                  </button>
+                  <span className="text-gray-700">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setCheckedIds(new Set())}
+                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                  >
+                    None
+                  </button>
                 </div>
-
-                {/* Kept listings */}
-                {kept.length > 0 && (
-                  <div className="space-y-1.5">
-                    {kept.map((listing, i) => (
-                      <a
-                        key={`kept-${i}`}
-                        href={listing.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-gray-800/60 hover:bg-gray-800 border border-emerald-800/30 hover:border-emerald-700/50 rounded-xl transition-all group"
-                      >
-                        {listing.image ? (
-                          <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
-                        ) : (
-                          <div className="w-11 h-11 rounded-lg bg-gray-700 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md leading-none">✓ Vintage</span>
-                          </div>
-                          <p className="text-sm text-gray-200 leading-snug line-clamp-2">{listing.title}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-amber-400 font-bold text-sm tabular-nums">${listing.price.toFixed(2)}</span>
-                          <svg className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {/* Filtered listings */}
-                {filtered.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 pt-1">
-                      <div className="flex-1 h-px bg-gray-800" />
-                      <span className="text-[10px] font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                        Filtered by AI · excluded from avg
-                      </span>
-                      <div className="flex-1 h-px bg-gray-800" />
-                    </div>
-                    {filtered.map((listing, i) => (
-                      <a
-                        key={`filtered-${i}`}
-                        href={listing.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-gray-900/40 border border-gray-800/40 rounded-xl transition-all group opacity-55 hover:opacity-80"
-                      >
-                        {listing.image ? (
-                          <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700 grayscale" />
-                        ) : (
-                          <div className="w-11 h-11 rounded-lg bg-gray-700/50 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-semibold text-red-400/80 bg-red-500/10 px-1.5 py-0.5 rounded-md leading-none">✕ Filtered</span>
-                          </div>
-                          <p className="text-sm text-gray-500 leading-snug line-clamp-2">{listing.title}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-gray-600 font-bold text-sm tabular-nums line-through">${listing.price.toFixed(2)}</span>
-                          <svg className="w-3.5 h-3.5 text-gray-700 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                )}
               </div>
-            );
-          })()}
+
+              {/* Listing rows with checkboxes */}
+              <div className="space-y-1.5">
+                {ebayListings.map((listing, i) => {
+                  const checked = checkedIds.has(i);
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                        checked
+                          ? 'bg-gray-800/60 border-gray-700/40'
+                          : 'bg-gray-900/30 border-gray-800/20 opacity-50'
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <button
+                        type="button"
+                        onClick={() => toggleCheck(i)}
+                        className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                          checked
+                            ? 'bg-amber-500 border-amber-500'
+                            : 'border-gray-600 bg-transparent hover:border-gray-400'
+                        }`}
+                        aria-label={checked ? 'Exclude from average' : 'Include in average'}
+                      >
+                        {checked && (
+                          <svg className="w-3 h-3 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Thumbnail */}
+                      {listing.image ? (
+                        <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-lg bg-gray-700 flex-shrink-0" />
+                      )}
+
+                      {/* Title + AI flag */}
+                      <a
+                        href={listing.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 min-w-0 group/link"
+                      >
+                        <p className="text-sm text-gray-300 leading-snug line-clamp-2 group-hover/link:text-amber-400 transition-colors">
+                          {listing.title}
+                        </p>
+                        {!listing.kept && (
+                          <span className="inline-block mt-0.5 text-[10px] font-semibold text-orange-400/80 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                            AI flagged · may be reprint
+                          </span>
+                        )}
+                      </a>
+
+                      {/* Price */}
+                      <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${
+                        checked ? 'text-amber-400' : 'text-gray-600 line-through'
+                      }`}>
+                        ${listing.price.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Load More */}
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={ebaySearching || ebayNoMore}
+                className="w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-gray-300 border border-gray-700/60 hover:border-gray-600 rounded-xl transition-all disabled:opacity-40 disabled:cursor-default"
+              >
+                {ebaySearching ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading more…
+                  </span>
+                ) : ebayNoMore ? 'No more results' : 'Load More'}
+              </button>
+
+              {/* Live average + Use This Average */}
+              <div className="flex items-center justify-between px-4 py-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                <div>
+                  <p className="text-[10px] text-amber-400/60 font-semibold uppercase tracking-wider">
+                    {checkedIds.size} comp{checkedIds.size !== 1 ? 's' : ''} selected
+                  </p>
+                  <p className="text-xl font-bold text-amber-400 tabular-nums mt-0.5">
+                    {liveAvg != null ? `$${liveAvg.toFixed(2)}` : '—'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (liveAvg != null) setForm((f) => ({ ...f, current_value: liveAvg.toFixed(2) }));
+                  }}
+                  disabled={liveAvg == null}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-xs font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-sm"
+                >
+                  Use This Average
+                </button>
+              </div>
+            </div>
+          )}
           {!ebaySearching && !ebayError && ebayListings.length === 0 && ebayQuery && (
             <div className="mt-4 text-sm text-gray-500 bg-gray-800/40 border border-gray-700/40 rounded-xl px-4 py-3 text-center">
               No listings found for "{ebayQuery}"

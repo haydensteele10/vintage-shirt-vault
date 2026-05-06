@@ -36,9 +36,9 @@ async function getAccessToken(): Promise<string> {
 }
 
 // deno-lint-ignore no-explicit-any
-async function browseSearch(token: string, query: string): Promise<any[]> {
-  const params = new URLSearchParams({ q: query, limit: '8' })
-  console.log('[ebay-search] trying query:', query)
+async function browseSearch(token: string, query: string, limit = 10, offset = 0): Promise<any[]> {
+  const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) })
+  console.log('[ebay-search] trying query:', query, offset > 0 ? `offset:${offset}` : '')
 
   const res = await fetch(`${BROWSE_URL}?${params}`, {
     headers: {
@@ -136,7 +136,11 @@ Deno.serve(async (req) => {
     const body = await req.json()
     console.log('[ebay-search] received body:', JSON.stringify(body))
 
-    const { brand, style, era, year, tour_or_event, graphic_keywords, sport, location } = body
+    const {
+      brand, style, era, year, tour_or_event, graphic_keywords, sport, location,
+      query: existingQuery,
+      offset = 0,
+    } = body
 
     const token = await getAccessToken()
 
@@ -201,11 +205,17 @@ Deno.serve(async (req) => {
     let items: any[] = []
     let usedQuery = ''
 
-    for (const q of uniqueQueries) {
-      items = await browseSearch(token, q)
-      if (items.length > 0) {
-        usedQuery = q
-        break
+    if (existingQuery) {
+      // Pagination: reuse the same query with an offset
+      items = await browseSearch(token, existingQuery, 10, offset)
+      usedQuery = existingQuery
+    } else {
+      for (const q of uniqueQueries) {
+        items = await browseSearch(token, q, 10)
+        if (items.length > 0) {
+          usedQuery = q
+          break
+        }
       }
     }
 
