@@ -178,8 +178,10 @@ export default function Profile() {
 
   // ── Load ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     loadAll();
+    // loadAll only needs to re-run when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Clean up avatar preview blob
