@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer,
-  Tooltip, XAxis, YAxis,
+  Area, AreaChart, Label, ReferenceDot, ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
@@ -30,16 +29,6 @@ const fmtCompact = (v) => {
   if (v >= 1_000)  return `$${(v / 1_000).toFixed(1)}k`;
   return `$${v.toFixed(0)}`;
 };
-
-function formatXTick(ts, rangeKey) {
-  const d = new Date(ts);
-  switch (rangeKey) {
-    case '1D':  return d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
-    case '7D':  return d.toLocaleDateString('en-US', { weekday: 'short' });
-    case 'MAX': return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-    default:    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-}
 
 function formatTooltipDate(ts, rangeKey) {
   const d = new Date(ts);
@@ -93,16 +82,6 @@ function getVisibleData(points, rangeMs) {
 
   const inRange = points.filter(p => p.date > rangeStart);
   return [{ date: rangeStart, value: startValue }, ...inRange];
-}
-
-function generateTicks(data, rangeKey) {
-  if (data.length < 2) return [];
-  const start = data[0].date;
-  const end   = data[data.length - 1].date;
-  const n = 5;
-  return Array.from({ length: n }, (_, i) =>
-    Math.round(start + ((end - start) * i) / (n - 1)),
-  );
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -195,9 +174,8 @@ export default function Dashboard() {
   const shirtCount  = allShirts.length;
 
   // ── Chart data ─────────────────────────────────────────────────────────────
-  const allPoints  = useMemo(() => buildTimeline(history), [history]);
-  const chartData  = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
-  const chartTicks = useMemo(() => generateTicks(chartData, selectedRange.key), [chartData, selectedRange.key]);
+  const allPoints = useMemo(() => buildTimeline(history), [history]);
+  const chartData = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
 
   // Range-relative gain: compare current portfolio value vs. value at range start
   const rangeStartValue = chartData.length > 0 ? chartData[0].value : 0;
@@ -216,7 +194,7 @@ export default function Dashboard() {
     <div className="space-y-5">
 
       {/* ── Hero + Chart card ─────────────────────────────────────────────── */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
 
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
@@ -287,68 +265,60 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Chart */}
-        <div className="h-56 sm:h-72 px-2 pb-2">
-          {hasChart ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                <defs>
-                  <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#fbbf24" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="#fbbf24" stopOpacity={0}    />
-                  </linearGradient>
-                </defs>
+        {/* Chart — edge-to-edge, Apple Stocks style */}
+        <div className="h-44 sm:h-56">
+          {hasChart ? (() => {
+            const lastPt = chartData[chartData.length - 1];
+            return (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 28, right: 0, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"   stopColor="#fbbf24" stopOpacity={0.28} />
+                      <stop offset="75%"  stopColor="#fbbf24" stopOpacity={0.06} />
+                      <stop offset="100%" stopColor="#fbbf24" stopOpacity={0}    />
+                    </linearGradient>
+                  </defs>
 
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#1f2937"
-                  vertical={false}
-                />
+                  <Tooltip
+                    content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
+                    cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1 }}
+                  />
 
-                <XAxis
-                  dataKey="date"
-                  type="number"
-                  scale="time"
-                  domain={['dataMin', 'dataMax']}
-                  ticks={chartTicks}
-                  tickFormatter={(ts) => formatXTick(ts, selectedRange.key)}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: '#4b5563', fontSize: 11 }}
-                  dy={8}
-                />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#fbbf24"
+                    strokeWidth={2.5}
+                    fill="url(#amberGrad)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#fbbf24', stroke: '#0a0a0f', strokeWidth: 2 }}
+                    isAnimationActive={false}
+                  />
 
-                <YAxis
-                  tickFormatter={fmtCompact}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: '#4b5563', fontSize: 11 }}
-                  width={52}
-                  tickCount={5}
-                  domain={[
-                    (d) => Math.floor(d * 0.985),
-                    (d) => Math.ceil(d  * 1.015),
-                  ]}
-                />
-
-                <Tooltip
-                  content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
-                  cursor={{ stroke: '#374151', strokeWidth: 1 }}
-                />
-
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#fbbf24"
-                  strokeWidth={2}
-                  fill="url(#amberGrad)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#fbbf24', stroke: '#0a0a0f', strokeWidth: 2 }}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
+                  {/* Floating value label at the endpoint */}
+                  <ReferenceDot
+                    x={lastPt.date}
+                    y={lastPt.value}
+                    r={4}
+                    fill="#fbbf24"
+                    stroke="#0a0a0f"
+                    strokeWidth={2}
+                  >
+                    <Label
+                      value={privacyMode ? '••••••' : fmtCompact(lastPt.value)}
+                      position="top"
+                      offset={10}
+                      fill="#fbbf24"
+                      fontSize={12}
+                      fontWeight="700"
+                      fontFamily="Inter, system-ui, sans-serif"
+                    />
+                  </ReferenceDot>
+                </AreaChart>
+              </ResponsiveContainer>
+            );
+          })() : (
             <div className="h-full flex flex-col items-center justify-center gap-2">
               <p className="text-sm text-gray-600">No price history for this period</p>
               <Link to="/shirts/new" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
@@ -363,7 +333,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Most Valuable */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+        <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
             <h2 className="font-semibold text-gray-100 text-sm">Most Valuable</h2>
             <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
@@ -428,7 +398,7 @@ export default function Dashboard() {
         </section>
 
         {/* Recent Additions */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+        <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
             <h2 className="font-semibold text-gray-100 text-sm">Recent Additions</h2>
             <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">

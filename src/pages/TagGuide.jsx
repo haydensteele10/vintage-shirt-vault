@@ -409,7 +409,7 @@ function TagCard({ tag }) {
     era.valueImpact === 'high' ? era : best, tag.eras[0]);
 
   return (
-    <div className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden flex flex-col">
+    <div className="rounded-2xl border border-gray-800/20 overflow-hidden flex flex-col">
       {/* Card header */}
       <button
         onClick={() => setExpanded((v) => !v)}
@@ -457,7 +457,7 @@ function ValueGuide() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="bg-gray-900 rounded-2xl border border-amber-500/20 overflow-hidden">
+    <div className="rounded-2xl border border-amber-500/20 overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-800/30 transition-colors"

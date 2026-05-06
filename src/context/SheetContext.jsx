@@ -4,12 +4,21 @@ const SheetContext = createContext(null);
 
 export function SheetProvider({ children }) {
   const [addShirtOpen, setAddShirtOpen] = useState(false);
+  const [prefillData,  setPrefillData]  = useState(null);
+
   return (
     <SheetContext.Provider
       value={{
         addShirtOpen,
-        openAddShirt:  () => setAddShirtOpen(true),
-        closeAddShirt: () => setAddShirtOpen(false),
+        prefillData,
+        openAddShirt: (data = null) => {
+          setPrefillData(data);
+          setAddShirtOpen(true);
+        },
+        closeAddShirt: () => {
+          setAddShirtOpen(false);
+          setPrefillData(null);
+        },
       }}
     >
       {children}

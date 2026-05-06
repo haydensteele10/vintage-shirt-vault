@@ -175,7 +175,7 @@ function ShirtCard({ shirt }) {
   return (
     <Link
       to={`/shirts/${shirt.id}`}
-      className="group block rounded-2xl overflow-hidden bg-gray-900 border border-gray-800/50 hover:border-amber-500/30 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300"
+      className="group block rounded-2xl overflow-hidden border border-gray-800/20 hover:border-amber-500/30 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300"
     >
       <div className="aspect-square bg-gray-800 relative overflow-hidden">
         {photo ? (
@@ -492,7 +492,7 @@ export default function Collection() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 p-1 bg-gray-900 border border-gray-800/60 rounded-xl">
+          <div className="flex items-center gap-0.5 p-1 border border-gray-800/20 rounded-xl">
             <button
               onClick={() => setView('grid')}
               className={`p-1.5 rounded-lg transition-all ${view === 'grid' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}

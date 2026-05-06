@@ -374,7 +374,7 @@ export default function Profile() {
     <div className="max-w-lg space-y-5 pb-8">
 
       {/* ── Profile header ─────────────────────────────────────────────────── */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
 
         {/* Amber gradient bar */}
         <div className="h-24 relative" style={{ background: 'var(--profile-header-gradient)' }}>
@@ -496,7 +496,7 @@ export default function Profile() {
 
       {/* ── Public stats ───────────────────────────────────────────────────── */}
       {stats && (
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+        <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
           <SectionHead>Collection Stats</SectionHead>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-gray-800/60">
@@ -566,7 +566,7 @@ export default function Profile() {
       )}
 
       {/* ── Showcase ───────────────────────────────────────────────────────── */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead
           action={
             <button
@@ -612,7 +612,7 @@ export default function Profile() {
       </section>
 
       {/* ── Friends ────────────────────────────────────────────────────────── */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead>{`Following · ${friends.length}`}</SectionHead>
 
         {/* Add friend form */}
@@ -674,7 +674,7 @@ export default function Profile() {
       </section>
 
       {/* ── Resources ──────────────────────────────────────────────────────── */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead>Resources</SectionHead>
         <div className="p-3">
           <Link
@@ -698,7 +698,7 @@ export default function Profile() {
       </section>
 
       {/* ── Account ────────────────────────────────────────────────────────── */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead>Account</SectionHead>
         <div className="p-5 space-y-3">
           <p className="text-xs text-gray-600">

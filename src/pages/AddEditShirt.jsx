@@ -199,7 +199,7 @@ function ListingCard({ listing, checked, onToggle }) {
       </div>
 
       {/* Details */}
-      <div className="p-2.5 bg-gray-900">
+      <div className="p-2.5">
         <p className="text-[11px] leading-snug text-gray-300 line-clamp-2 mb-2 min-h-[2.75rem]">
           {listing.title}
         </p>
@@ -226,15 +226,21 @@ function ListingCard({ listing, checked, onToggle }) {
   );
 }
 
-export default function AddEditShirt({ forceNewMode = false, onComplete, onCancel }) {
+export default function AddEditShirt({ forceNewMode = false, initialData = null, onComplete, onCancel }) {
   const { id: routeId } = useParams();
   const id     = forceNewMode ? undefined : routeId;
   const isEdit = Boolean(id) && id !== 'new';
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [slots, setSlots] = useState(EMPTY_SLOTS);
+  const [form, setForm] = useState(() =>
+    initialData?.form ? { ...EMPTY_FORM, ...initialData.form } : EMPTY_FORM,
+  );
+  const [slots, setSlots] = useState(() =>
+    initialData?.imageUrl
+      ? { ...EMPTY_SLOTS, front: { url: initialData.imageUrl, pendingFile: null, removed: false } }
+      : EMPTY_SLOTS,
+  );
   const [originalValue, setOriginalValue] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
@@ -540,7 +546,7 @@ export default function AddEditShirt({ forceNewMode = false, onComplete, onCance
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Identification */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+        <section className="rounded-2xl border border-gray-800/20 p-6">
           <SectionHeading>Identification</SectionHeading>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -566,7 +572,7 @@ export default function AddEditShirt({ forceNewMode = false, onComplete, onCance
         </section>
 
         {/* Photos */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+        <section className="rounded-2xl border border-gray-800/20 p-6">
           <div className="flex items-center gap-3 mb-5">
             <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">Photos</span>
             <div className="flex-1 h-px bg-gray-800" />
@@ -635,7 +641,7 @@ export default function AddEditShirt({ forceNewMode = false, onComplete, onCance
         </section>
 
         {/* Condition */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+        <section className="rounded-2xl border border-gray-800/20 p-6">
           <SectionHeading>Condition</SectionHeading>
           <Field label="Condition" required>
             <div className="flex gap-2 flex-wrap mt-1">
@@ -658,7 +664,7 @@ export default function AddEditShirt({ forceNewMode = false, onComplete, onCance
         </section>
 
         {/* Financial */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+        <section className="rounded-2xl border border-gray-800/20 p-6">
           <SectionHeading>Financials</SectionHeading>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Purchase Price ($)">
@@ -808,7 +814,7 @@ export default function AddEditShirt({ forceNewMode = false, onComplete, onCance
         </section>
 
         {/* Notes */}
-        <section className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6">
+        <section className="rounded-2xl border border-gray-800/20 p-6">
           <SectionHeading>Notes</SectionHeading>
           <textarea value={form.notes} onChange={set('notes')} rows={4} className={inputCls} placeholder="Provenance, print details, quirks, repairs…" />
         </section>

@@ -68,7 +68,7 @@ export default function Auth() {
           <p className="mt-1.5 text-sm text-gray-500">Your personal collection tracker</p>
         </div>
 
-        <div className="bg-gray-900 rounded-2xl border border-gray-800/60 p-8 shadow-glow-sm">
+        <div className="rounded-2xl border border-gray-800/20 p-8 shadow-glow-sm">
           {/* Mode toggle */}
           <div className="flex rounded-xl bg-gray-800/60 p-1 mb-7 gap-1">
             {[

@@ -89,8 +89,9 @@ html.light-mode .active\:bg-gray-800:active    { background-color: #c8e0f2 !impo
 /* ── Border colors ───────────────────────────────────────────────────────── */
 html.light-mode .border-gray-800          { border-color: #bcd4e8 !important; }
 html.light-mode .border-gray-800\/60      { border-color: rgba(188,212,232,0.75) !important; }
-html.light-mode .border-gray-800\/30      { border-color: rgba(188,212,232,0.45) !important; }
 html.light-mode .border-gray-800\/40      { border-color: rgba(188,212,232,0.55) !important; }
+html.light-mode .border-gray-800\/30      { border-color: rgba(188,212,232,0.45) !important; }
+html.light-mode .border-gray-800\/20      { border-color: rgba(188,212,232,0.30) !important; }
 html.light-mode .border-gray-700          { border-color: #a8c4d8 !important; }
 html.light-mode .border-gray-700\/80      { border-color: rgba(168,196,216,0.85) !important; }
 html.light-mode .border-gray-700\/60      { border-color: rgba(168,196,216,0.70) !important; }

@@ -1,12 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { discoverListings } from '../lib/ebay';
+import { discoverListings, searchEbayActiveListings } from '../lib/ebay';
+import { useSheet } from '../context/SheetContext';
+
+// ─── Title parser — extract form fields from a raw eBay listing title ─────────
+
+function parseTitleToFormFields(title, price) {
+  const fields = {
+    brand: '',
+    era: '',
+    year: '',
+    style: 'band_tee',
+    purchase_price: price != null ? String(price.toFixed(2)) : '',
+    notes: `eBay listing: ${title}`,
+  };
+
+  // Year: 4-digit 1960–2009
+  const yearMatch = title.match(/\b(19[6-9]\d|200[0-9])\b/);
+  if (yearMatch) {
+    fields.year = yearMatch[1];
+    const y = parseInt(yearMatch[1], 10);
+    fields.era = `${Math.floor(y / 10) * 10}s`;
+  }
+
+  // Era from decade keyword (may override year-derived era)
+  const eraMatch = title.match(/\b(60s|70s|80s|90s|2000s|00s)\b/i);
+  if (eraMatch) fields.era = eraMatch[1].toLowerCase().replace('2000s', '00s');
+
+  // Style detection
+  if (/nfl|nba|mlb|nascar|racing|football|basketball|baseball|hockey|sport/i.test(title)) {
+    fields.style = 'sports';
+  } else if (/harley|work|carhartt|union|trucker/i.test(title)) {
+    fields.style = 'workwear';
+  } else if (/souvenir|destination|vacation|tourist/i.test(title)) {
+    fields.style = 'souvenir';
+  }
+
+  // Brand: heuristic — text before "vintage", "tee", "t-shirt", a year, or a tour keyword
+  const brandMatch = title.match(
+    /^([A-Za-z][A-Za-z\s'&./-]{1,40}?)(?:\s+(?:vintage|vtg|tee|t-shirt|shirt|tour|concert|\d{4}|'?[89]\d|single|deadstock))/i,
+  );
+  if (brandMatch) {
+    fields.brand = brandMatch[1].trim().replace(/\s+/g, ' ');
+  } else {
+    // Fall back to first 3 words
+    fields.brand = title.split(/\s+/).slice(0, 3).join(' ');
+  }
+
+  return fields;
+}
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
-    <div className="flex-none w-40 sm:w-48 bg-gray-900 rounded-xl border border-gray-800/60 overflow-hidden">
+    <div className="flex-none w-40 sm:w-48 rounded-xl border border-gray-800/20 overflow-hidden">
       <div className="aspect-square bg-gray-800 animate-pulse" />
       <div className="p-3 space-y-2">
         <div className="h-3 bg-gray-800 rounded animate-pulse" />
@@ -25,17 +73,14 @@ function DiscoverSkeleton() {
         <div className="h-6 w-28 bg-gray-800 rounded animate-pulse" />
         <div className="h-3 w-52 bg-gray-800 rounded animate-pulse" />
       </div>
-
-      {[0, 1, 2, 3, 4].map((i) => (
+      {[0, 1, 2].map((i) => (
         <section key={i}>
           <div className="flex items-center justify-between px-4 sm:px-6 mb-3">
             <div className="h-4 w-44 bg-gray-800 rounded animate-pulse" />
             <div className="h-3 w-14 bg-gray-800 rounded animate-pulse" />
           </div>
           <div className="flex gap-3 overflow-hidden px-4 sm:px-6">
-            {[0, 1, 2, 3].map((j) => (
-              <SkeletonCard key={j} />
-            ))}
+            {[0, 1, 2, 3].map((j) => <SkeletonCard key={j} />)}
           </div>
         </section>
       ))}
@@ -43,17 +88,27 @@ function DiscoverSkeleton() {
   );
 }
 
-// ─── Listing card ─────────────────────────────────────────────────────────────
+// ─── Listing cards ────────────────────────────────────────────────────────────
 
-function ListingCard({ listing }) {
+function DiscoverListingCard({ listing }) {
   const [imgError, setImgError] = useState(false);
+  const { openAddShirt } = useSheet();
+
+  function handleAdd(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    openAddShirt({
+      form: parseTitleToFormFields(listing.title, listing.price),
+      imageUrl: listing.image || null,
+    });
+  }
 
   return (
     <a
       href={listing.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex-none w-40 sm:w-48 bg-gray-900 rounded-xl border border-gray-800/60 overflow-hidden hover:border-amber-500/40 active:border-amber-500/60 transition-colors group"
+      className="flex-none w-40 sm:w-48 rounded-xl border border-gray-800/20 overflow-hidden hover:border-amber-500/40 active:border-amber-500/60 transition-colors group"
     >
       <div className="aspect-square bg-gray-800 overflow-hidden">
         {listing.image && !imgError ? (
@@ -79,24 +134,79 @@ function ListingCard({ listing }) {
         <p className="text-sm font-bold text-amber-400 tabular-nums mb-2.5">
           ${listing.price.toFixed(2)}
         </p>
-        <div className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-gray-800/70 border border-gray-700/50 group-hover:bg-amber-500/10 group-hover:border-amber-500/30 transition-colors">
-          <span className="text-[10px] font-semibold text-gray-400 group-hover:text-amber-400 transition-colors tracking-wide">
-            View on eBay
-          </span>
-          <svg className="w-3 h-3 text-gray-600 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        <button
+          onClick={handleAdd}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors"
+        >
+          <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-        </div>
+          <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+        </button>
       </div>
     </a>
   );
 }
 
-// ─── Group section ────────────────────────────────────────────────────────────
+function SearchResultCard({ listing }) {
+  const [imgError, setImgError] = useState(false);
+  const { openAddShirt } = useSheet();
+
+  function handleAdd(e) {
+    e.stopPropagation();
+    openAddShirt({
+      form: parseTitleToFormFields(listing.title, listing.price),
+      imageUrl: listing.image || null,
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-800/20 overflow-hidden hover:border-amber-500/30 transition-colors group">
+      <a href={listing.url} target="_blank" rel="noopener noreferrer">
+        <div className="aspect-square bg-gray-800 overflow-hidden">
+          {listing.image && !imgError ? (
+            <img
+              src={listing.image}
+              alt={listing.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="p-3">
+          <p className="text-[11px] text-gray-400 leading-snug line-clamp-2 mb-1.5 group-hover:text-gray-300 transition-colors">
+            {listing.title}
+          </p>
+          <p className="text-sm font-bold text-amber-400 tabular-nums mb-2.5">
+            ${listing.price.toFixed(2)}
+          </p>
+        </div>
+      </a>
+      <div className="px-3 pb-3">
+        <button
+          onClick={handleAdd}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors"
+        >
+          <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Curated group section ────────────────────────────────────────────────────
 
 function GroupSection({ group }) {
   const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(group.query)}`;
-
   return (
     <section>
       <div className="flex items-center justify-between px-4 sm:px-6 mb-3">
@@ -115,7 +225,7 @@ function GroupSection({ group }) {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {group.listings.map((listing, i) => (
-          <ListingCard key={i} listing={listing} />
+          <DiscoverListingCard key={i} listing={listing} />
         ))}
       </div>
     </section>
@@ -127,7 +237,7 @@ function GroupSection({ group }) {
 function EmptyCollection() {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-      <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center mb-4">
+      <div className="w-14 h-14 rounded-full border border-gray-800/20 flex items-center justify-center mb-4">
         <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
           <circle cx="12" cy="12" r="9" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
@@ -156,56 +266,181 @@ function ErrorState({ message, onRetry }) {
   );
 }
 
+// ─── Search bar ───────────────────────────────────────────────────────────────
+
+function SearchBar({ onSearch, loading }) {
+  const [value, setValue] = useState('');
+  const inputRef = useRef(null);
+
+  function submit(e) {
+    e.preventDefault();
+    const q = value.trim();
+    if (q) onSearch(q);
+  }
+
+  function clear() {
+    setValue('');
+    onSearch(null);
+    inputRef.current?.focus();
+  }
+
+  return (
+    <form onSubmit={submit} className="relative">
+      <div className="flex items-center gap-2 bg-gray-800/60 border border-gray-700/40 hover:border-gray-600/60 focus-within:border-amber-500/50 focus-within:bg-gray-800/80 rounded-2xl px-4 py-3 transition-all">
+        {loading ? (
+          <svg className="w-4 h-4 text-gray-500 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        )}
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Search eBay listings… e.g. Grateful Dead 1995"
+          className="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 focus:outline-none"
+        />
+        {value && (
+          <button type="button" onClick={clear} className="text-gray-600 hover:text-gray-400 transition-colors flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function Discover() {
-  const [groups, setGroups]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [groups,        setGroups]       = useState([]);
+  const [curatedLoading, setCuratedLoading] = useState(true);
+  const [curatedError,   setCuratedError]   = useState(null);
 
-  async function load() {
-    setLoading(true);
-    setError(null);
+  const [searchQuery,   setSearchQuery]  = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError,   setSearchError]  = useState(null);
+
+  async function loadCurated() {
+    setCuratedLoading(true);
+    setCuratedError(null);
     try {
       const { data: shirts, error: dbError } = await supabase
         .from('shirts')
         .select('brand, style, era, year, current_est_value');
-
       if (dbError) throw new Error(dbError.message);
-      if (!shirts?.length) {
-        setGroups([]);
-        return;
-      }
-
+      if (!shirts?.length) { setGroups([]); return; }
       const result = await discoverListings(shirts);
       setGroups(result?.groups ?? []);
     } catch (err) {
-      setError(err.message);
+      setCuratedError(err.message);
     } finally {
-      setLoading(false);
+      setCuratedLoading(false);
+    }
+  }
+
+  async function handleSearch(query) {
+    if (!query) {
+      setSearchQuery(null);
+      setSearchResults([]);
+      return;
+    }
+    setSearchQuery(query);
+    setSearchLoading(true);
+    setSearchError(null);
+    try {
+      const { listings } = await searchEbayActiveListings(query);
+      setSearchResults(listings ?? []);
+    } catch (err) {
+      setSearchError(err.message);
+    } finally {
+      setSearchLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
-    // Intentionally omitting `load` — we want this to fire once on mount.
+    loadCurated();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <DiscoverSkeleton />;
-  if (error) return <ErrorState message={error} onRetry={load} />;
-  if (!groups.length) return <EmptyCollection />;
+  const showSearch = searchQuery !== null;
 
   return (
-    <div className="space-y-8 pb-24">
-      <div className="px-4 sm:px-6 pt-2">
-        <h1 className="text-xl font-bold text-gray-50">Discover</h1>
-        <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
+    <div className="space-y-6 pb-24">
+      {/* Header + search */}
+      <div className="px-4 sm:px-6 pt-2 space-y-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-50">Discover</h1>
+          <p className="text-xs text-gray-500 mt-1">Search eBay or browse curated picks from your collection</p>
+        </div>
+        <SearchBar onSearch={handleSearch} loading={searchLoading} />
       </div>
 
-      {groups.map((group) => (
-        <GroupSection key={group.id} group={group} />
-      ))}
+      {/* Search results */}
+      {showSearch && (
+        <div className="px-4 sm:px-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-gray-300">
+              {searchLoading ? 'Searching…' : `Results for "${searchQuery}"`}
+            </p>
+            {!searchLoading && searchResults.length > 0 && (
+              <span className="text-xs text-gray-600">{searchResults.length} listings</span>
+            )}
+          </div>
+
+          {searchError && (
+            <p className="text-sm text-red-400 text-center py-8">{searchError}</p>
+          )}
+
+          {searchLoading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {[0,1,2,3,4,5].map((i) => (
+                <div key={i} className="rounded-xl border border-gray-800/20 overflow-hidden">
+                  <div className="aspect-square bg-gray-800 animate-pulse" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-gray-800 rounded animate-pulse" />
+                    <div className="h-3 w-2/3 bg-gray-800 rounded animate-pulse" />
+                    <div className="h-8 bg-gray-800/60 rounded-lg animate-pulse mt-2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!searchLoading && !searchError && searchResults.length === 0 && (
+            <p className="text-sm text-gray-600 text-center py-8">No listings found for "{searchQuery}"</p>
+          )}
+
+          {!searchLoading && searchResults.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {searchResults.map((listing, i) => (
+                <SearchResultCard key={i} listing={listing} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Curated sections */}
+      {!showSearch && (
+        <>
+          {curatedLoading && <DiscoverSkeleton />}
+          {!curatedLoading && curatedError && (
+            <ErrorState message={curatedError} onRetry={loadCurated} />
+          )}
+          {!curatedLoading && !curatedError && !groups.length && <EmptyCollection />}
+          {!curatedLoading && !curatedError && groups.map((group) => (
+            <GroupSection key={group.id} group={group} />
+          ))}
+        </>
+      )}
     </div>
   );
 }

@@ -93,6 +93,8 @@ export default function AddShirtSheet() {
     navigate(`/shirts/${shirtId}`);
   }
 
+  const { prefillData } = useSheet();
+
   return (
     /* Outer container — always in DOM, pointer events only when open */
     <div
@@ -146,6 +148,7 @@ export default function AddShirtSheet() {
           <div className="px-4 py-5">
             <AddEditShirt
               forceNewMode
+              initialData={prefillData}
               onComplete={handleSaved}
               onCancel={closeAddShirt}
             />

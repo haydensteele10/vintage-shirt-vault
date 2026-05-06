@@ -270,7 +270,7 @@ export default function Activity() {
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800/60 px-6 py-12 text-center space-y-3">
+        <div className="rounded-2xl border border-gray-800/20 px-6 py-12 text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
             <svg className="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -288,7 +288,7 @@ export default function Activity() {
               <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest px-1 mb-2">
                 {group}
               </p>
-              <div className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+              <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
                 {grouped[group].map((item) => (
                   <ActivityItem key={item.id} item={item} currentUserId={user.id} />
                 ))}

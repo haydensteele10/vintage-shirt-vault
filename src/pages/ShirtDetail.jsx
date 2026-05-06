@@ -158,7 +158,7 @@ export default function ShirtDetail() {
           )}
 
           {/* Details list */}
-          <div className="bg-gray-900 rounded-2xl border border-gray-800/60 px-5">
+          <div className="rounded-2xl border border-gray-800/20 px-5">
             <dl>
               <DetailRow label="Era / Year" value={[shirt.era, shirt.year].filter(Boolean).join(' · ') || '—'} />
               <DetailRow label="Size" value={shirt.size ?? '—'} />
@@ -171,13 +171,13 @@ export default function ShirtDetail() {
           {(shirt.valuation_notes || shirt.notes) && (
             <div className="space-y-3">
               {shirt.valuation_notes && (
-                <div className="bg-gray-900 rounded-2xl border border-gray-800/60 p-5">
+                <div className="rounded-2xl border border-gray-800/20 p-5">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Valuation Notes</p>
                   <p className="text-sm text-gray-300 leading-relaxed">{shirt.valuation_notes}</p>
                 </div>
               )}
               {shirt.notes && (
-                <div className="bg-gray-900 rounded-2xl border border-gray-800/60 p-5">
+                <div className="rounded-2xl border border-gray-800/20 p-5">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Notes</p>
                   <p className="text-sm text-gray-300 leading-relaxed">{shirt.notes}</p>
                 </div>
@@ -205,7 +205,7 @@ export default function ShirtDetail() {
       </div>
 
       {/* Price History */}
-      <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-800/60">
           <h2 className="font-semibold text-gray-100">Price History</h2>
           <Link to="/price-history" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">

@@ -74,7 +74,7 @@ export default function PriceHistory() {
 
       {/* Add entry form */}
       {adding && (
-        <form onSubmit={handleAddEntry} className="bg-gray-900 rounded-2xl border border-gray-800/60 p-6 space-y-5">
+        <form onSubmit={handleAddEntry} className="rounded-2xl border border-gray-800/20 p-6 space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-gray-800/60">
             <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">Log New Price</span>
             <div className="flex-1 h-px bg-gray-800" />
@@ -131,7 +131,7 @@ export default function PriceHistory() {
       )}
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 p-3 bg-gray-900/60 border border-gray-800/60 rounded-2xl">
+      <div className="flex items-center gap-3 p-3 border border-gray-800/20 rounded-2xl">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -159,12 +159,12 @@ export default function PriceHistory() {
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 bg-gray-900/40 rounded-2xl border border-gray-800/40">
+        <div className="text-center py-20 rounded-2xl border border-gray-800/20">
           <p className="text-gray-400 font-medium">No price history yet</p>
           <p className="text-sm text-gray-600 mt-1">Prices are logged automatically when you set a value on a shirt.</p>
         </div>
       ) : (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
+        <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800/60">
