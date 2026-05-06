@@ -377,7 +377,7 @@ export default function Profile() {
       <section className="bg-gray-900 rounded-2xl border border-gray-800/60 overflow-hidden">
 
         {/* Amber gradient bar */}
-        <div className="h-24 bg-gradient-to-br from-amber-900/40 via-gray-900 to-gray-900 relative">
+        <div className="h-24 relative" style={{ background: 'var(--profile-header-gradient)' }}>
           {!editing && (
             <button
               onClick={() => { setDraft({ username: profile?.username ?? '', bio: profile?.bio ?? '' }); setEditing(true); }}

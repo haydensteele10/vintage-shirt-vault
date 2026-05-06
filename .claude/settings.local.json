@@ -5,7 +5,8 @@
       "Bash(Select-Object FullName, PSIsContainer)",
       "Bash(Sort-Object FullName)",
       "Bash(ConvertTo-String -Width 120)",
-      "Bash(npx react-scripts *)"
+      "Bash(npx react-scripts *)",
+      "Bash(npm run *)"
     ]
   }
 }
