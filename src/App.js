@@ -8,6 +8,7 @@ import Collection from './pages/Collection';
 import ShirtDetail from './pages/ShirtDetail';
 import AddEditShirt from './pages/AddEditShirt';
 import PriceHistory from './pages/PriceHistory';
+import Discover from './pages/Discover';
 import Profile from './pages/Profile';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="shirts/:id" element={<ShirtDetail />} />
               <Route path="shirts/:id/edit" element={<AddEditShirt />} />
               <Route path="price-history" element={<PriceHistory />} />
+              <Route path="discover" element={<Discover />} />
               <Route path="profile" element={<Profile />} />
             </Route>
           </Route>

@@ -5,7 +5,7 @@ const links = [
   { to: '/',              label: 'Dashboard',     end: true  },
   { to: '/collection',   label: 'Collection',    end: false },
   { to: '/shirts/new',   label: '+ Add Shirt',   end: false },
-  { to: '/price-history', label: 'Price History', end: false },
+  { to: '/discover',      label: 'Discover',      end: false },
   { to: '/profile',      label: 'Profile',       end: false },
 ];
 

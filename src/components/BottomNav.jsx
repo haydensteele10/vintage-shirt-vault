@@ -19,10 +19,11 @@ function CollectionIcon() {
   );
 }
 
-function PriceHistoryIcon() {
+function DiscoverIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" />
     </svg>
   );
 }
@@ -80,7 +81,7 @@ export default function BottomNav() {
           <span className="mt-0.5">Add</span>
         </div>
 
-        <Tab to="/price-history"     label="History"    Icon={PriceHistoryIcon} />
+        <Tab to="/discover"           label="Discover"   Icon={DiscoverIcon} />
         <Tab to="/profile"           label="Profile"    Icon={ProfileIcon} />
       </div>
     </nav>
