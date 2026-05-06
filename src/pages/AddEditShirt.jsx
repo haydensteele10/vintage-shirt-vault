@@ -151,6 +151,81 @@ function PhotoSlot({ slotKey, label, currentUrl, pendingFile, onFileSelect, onRe
   );
 }
 
+function ListingCard({ listing, checked, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`relative text-left w-full rounded-2xl overflow-hidden transition-all duration-200 ${
+        checked
+          ? 'ring-2 ring-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
+          : 'ring-1 ring-gray-800/60 opacity-40'
+      }`}
+    >
+      {/* Thumbnail */}
+      <div className="aspect-square bg-gray-800 relative">
+        {listing.image ? (
+          <img src={listing.image} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        )}
+
+        {/* Gold checkmark */}
+        <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+          checked
+            ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+            : 'bg-gray-900/70 border border-gray-600 backdrop-blur-sm'
+        }`}>
+          {checked && (
+            <svg className="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+
+        {/* AI-flagged badge */}
+        {!listing.kept && (
+          <div className="absolute bottom-2 left-2">
+            <span className="text-[9px] font-bold text-orange-300/90 bg-gray-950/80 px-1.5 py-0.5 rounded-md backdrop-blur-sm leading-none">
+              AI FLAGGED
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Details */}
+      <div className="p-2.5 bg-gray-900">
+        <p className="text-[11px] leading-snug text-gray-300 line-clamp-2 mb-2 min-h-[2.75rem]">
+          {listing.title}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className={`text-[13px] font-bold tabular-nums ${checked ? 'text-amber-400' : 'text-gray-600'}`}>
+            ${listing.price.toFixed(2)}
+          </span>
+          {/* External link — stops propagation so tapping it doesn't toggle the card */}
+          <a
+            href={listing.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-gray-700 hover:text-amber-400 transition-colors p-0.5"
+            aria-label="View on eBay"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export default function AddEditShirt() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -590,123 +665,80 @@ export default function AddEditShirt() {
               {ebayError}
             </div>
           )}
+
           {ebayListings.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {/* Header row */}
+            <div className="mt-5 space-y-4">
+              {/* Header */}
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500 uppercase tracking-wider truncate mr-3">
-                  eBay comps — <span className="text-gray-400 normal-case">"{ebayQuery}"</span>
-                </p>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="min-w-0 mr-3">
+                  <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">eBay Comps</p>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">"{ebayQuery}"</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 text-xs">
                   <button
                     type="button"
                     onClick={() => setCheckedIds(new Set(ebayListings.map((_, i) => i)))}
-                    className="text-xs text-gray-600 hover:text-amber-400 transition-colors"
+                    className="text-gray-600 hover:text-amber-400 transition-colors font-medium"
                   >
-                    All
+                    Select all
                   </button>
-                  <span className="text-gray-700">·</span>
+                  <span className="text-gray-800">·</span>
                   <button
                     type="button"
                     onClick={() => setCheckedIds(new Set())}
-                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                    className="text-gray-600 hover:text-gray-400 transition-colors font-medium"
                   >
                     None
                   </button>
                 </div>
               </div>
 
-              {/* Listing rows with checkboxes */}
-              <div className="space-y-1.5">
-                {ebayListings.map((listing, i) => {
-                  const checked = checkedIds.has(i);
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                        checked
-                          ? 'bg-gray-800/60 border-gray-700/40'
-                          : 'bg-gray-900/30 border-gray-800/20 opacity-50'
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <button
-                        type="button"
-                        onClick={() => toggleCheck(i)}
-                        className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                          checked
-                            ? 'bg-amber-500 border-amber-500'
-                            : 'border-gray-600 bg-transparent hover:border-gray-400'
-                        }`}
-                        aria-label={checked ? 'Exclude from average' : 'Include in average'}
-                      >
-                        {checked && (
-                          <svg className="w-3 h-3 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-
-                      {/* Thumbnail */}
-                      {listing.image ? (
-                        <img src={listing.image} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 bg-gray-700" />
-                      ) : (
-                        <div className="w-11 h-11 rounded-lg bg-gray-700 flex-shrink-0" />
-                      )}
-
-                      {/* Title + AI flag */}
-                      <a
-                        href={listing.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 min-w-0 group/link"
-                      >
-                        <p className="text-sm text-gray-300 leading-snug line-clamp-2 group-hover/link:text-amber-400 transition-colors">
-                          {listing.title}
-                        </p>
-                        {!listing.kept && (
-                          <span className="inline-block mt-0.5 text-[10px] font-semibold text-orange-400/80 bg-orange-500/10 px-1.5 py-0.5 rounded">
-                            AI flagged · may be reprint
-                          </span>
-                        )}
-                      </a>
-
-                      {/* Price */}
-                      <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${
-                        checked ? 'text-amber-400' : 'text-gray-600 line-through'
-                      }`}>
-                        ${listing.price.toFixed(2)}
-                      </span>
-                    </div>
-                  );
-                })}
+              {/* Card grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {ebayListings.map((listing, i) => (
+                  <ListingCard
+                    key={i}
+                    listing={listing}
+                    checked={checkedIds.has(i)}
+                    onToggle={() => toggleCheck(i)}
+                  />
+                ))}
               </div>
 
-              {/* Load More */}
+              {/* Load More Results */}
               <button
                 type="button"
                 onClick={loadMore}
                 disabled={ebaySearching || ebayNoMore}
-                className="w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-gray-300 border border-gray-700/60 hover:border-gray-600 rounded-xl transition-all disabled:opacity-40 disabled:cursor-default"
+                className="w-full py-3 flex items-center justify-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-200 border border-gray-700/60 hover:border-gray-600 rounded-xl transition-all disabled:opacity-40 disabled:cursor-default"
               >
                 {ebaySearching ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     Loading more…
-                  </span>
-                ) : ebayNoMore ? 'No more results' : 'Load More'}
+                  </>
+                ) : ebayNoMore ? (
+                  'No more results'
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Load More Results
+                  </>
+                )}
               </button>
 
-              {/* Live average + Use This Average */}
-              <div className="flex items-center justify-between px-4 py-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              {/* Live average bar */}
+              <div className="flex items-center justify-between px-5 py-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl">
                 <div>
-                  <p className="text-[10px] text-amber-400/60 font-semibold uppercase tracking-wider">
-                    {checkedIds.size} comp{checkedIds.size !== 1 ? 's' : ''} selected
+                  <p className="text-[10px] font-semibold text-amber-400/50 uppercase tracking-widest">
+                    Average · {checkedIds.size} comp{checkedIds.size !== 1 ? 's' : ''}
                   </p>
-                  <p className="text-xl font-bold text-amber-400 tabular-nums mt-0.5">
+                  <p className="text-2xl font-bold text-amber-400 tabular-nums mt-0.5 leading-none">
                     {liveAvg != null ? `$${liveAvg.toFixed(2)}` : '—'}
                   </p>
                 </div>
@@ -716,13 +748,14 @@ export default function AddEditShirt() {
                     if (liveAvg != null) setForm((f) => ({ ...f, current_value: liveAvg.toFixed(2) }));
                   }}
                   disabled={liveAvg == null}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-xs font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-sm"
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-sm"
                 >
                   Use This Average
                 </button>
               </div>
             </div>
           )}
+
           {!ebaySearching && !ebayError && ebayListings.length === 0 && ebayQuery && (
             <div className="mt-4 text-sm text-gray-500 bg-gray-800/40 border border-gray-700/40 rounded-xl px-4 py-3 text-center">
               No listings found for "{ebayQuery}"
