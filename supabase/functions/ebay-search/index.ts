@@ -138,78 +138,81 @@ Deno.serve(async (req) => {
 
     const {
       brand, style, era, year, tour_or_event, graphic_keywords, sport, location,
-      query: existingQuery,
+      query: directQuery,
       offset = 0,
     } = body
 
     const token = await getAccessToken()
 
-    const yearStr = year ? String(year) : ''
-    const yearNum = year ? Math.floor(Number(year)) : 0
-    const decade  = era
-      ? era.replace(/^(early|mid|late)\s+/i, '').trim()
-      : yearNum ? `${Math.floor(yearNum / 10) * 10}s` : ''
-    const datePart = yearStr || decade
-
-    const q = (...parts: (string | null | undefined)[]) =>
-      parts.filter(Boolean).join(' ')
-
-    const queries: string[] = []
-
-    if (style === 'band_tee') {
-      if (tour_or_event && datePart) queries.push(q(brand, tour_or_event, datePart, 'tee'))
-      if (tour_or_event)             queries.push(q(brand, tour_or_event, 'tee'))
-      if (graphic_keywords)          queries.push(q(brand, graphic_keywords, 'vintage tee', decade))
-      if (datePart)                  queries.push(q(brand, datePart, 'vintage tee'))
-                                     queries.push(q(brand, 'vintage tee'))
-                                     queries.push(brand)
-
-    } else if (style === 'sports') {
-      if (tour_or_event && datePart) queries.push(q('vintage', brand, tour_or_event, datePart, 'tee'))
-      if (tour_or_event)             queries.push(q('vintage', brand, tour_or_event, 'tee'))
-      if (sport && datePart)         queries.push(q('vintage', brand, sport, datePart, 'tee'))
-      if (datePart)                  queries.push(q('vintage', brand, datePart, 'tee'))
-      if (sport)                     queries.push(q('vintage', brand, sport, 'tee'))
-                                     queries.push(q('vintage', brand, 'tee'))
-                                     queries.push(brand)
-
-    } else if (style === 'souvenir') {
-      const place = location ? q(brand, location) : brand
-      if (tour_or_event && datePart) queries.push(q(place, tour_or_event, datePart, 'vintage tee'))
-      if (tour_or_event)             queries.push(q(place, tour_or_event, 'vintage tee'))
-      if (datePart)                  queries.push(q('vintage', place, datePart, 'tee'))
-                                     queries.push(q('vintage', place, 'souvenir tee'))
-                                     queries.push(q('vintage', place, 'tee'))
-                                     queries.push(place)
-
-    } else {
-      const brandWithLocation = location ? q(brand, location) : brand
-      if (graphic_keywords && datePart) queries.push(q(brandWithLocation, graphic_keywords, datePart, 'vintage tee'))
-      if (graphic_keywords)             queries.push(q(brandWithLocation, graphic_keywords, 'vintage tee'))
-      if (tour_or_event)                queries.push(q(brandWithLocation, tour_or_event, 'vintage tee'))
-      if (datePart)                     queries.push(q(brandWithLocation, datePart, 'vintage tee'))
-                                        queries.push(q(brandWithLocation, 'vintage tee'))
-                                        queries.push(brandWithLocation)
-    }
-
-    // Deduplicate while preserving order
-    const seen = new Set<string>()
-    const uniqueQueries = queries.filter((q) => {
-      const k = q.toLowerCase()
-      if (seen.has(k)) return false
-      seen.add(k)
-      return true
-    })
-
     // deno-lint-ignore no-explicit-any
     let items: any[] = []
     let usedQuery = ''
 
-    if (existingQuery) {
-      // Pagination: reuse the same query with an offset
-      items = await browseSearch(token, existingQuery, 10, offset)
-      usedQuery = existingQuery
+    if (directQuery) {
+      // ── Direct query from Search tab (or pagination) — skip field-based building
+      console.log('[ebay-search] direct query mode:', directQuery, offset > 0 ? `offset:${offset}` : '')
+      items = await browseSearch(token, directQuery, 10, offset)
+      usedQuery = directQuery
     } else {
+      // ── Field-based query building from Add Shirt form ─────────────────────
+      const yearStr = year ? String(year) : ''
+      const yearNum = year ? Math.floor(Number(year)) : 0
+      const decade  = era
+        ? era.replace(/^(early|mid|late)\s+/i, '').trim()
+        : yearNum ? `${Math.floor(yearNum / 10) * 10}s` : ''
+      const datePart = yearStr || decade
+
+      const join = (...parts: (string | null | undefined)[]) =>
+        parts.filter(Boolean).join(' ')
+
+      const queries: string[] = []
+
+      if (style === 'band_tee') {
+        if (tour_or_event && datePart) queries.push(join(brand, tour_or_event, datePart, 'tee'))
+        if (tour_or_event)             queries.push(join(brand, tour_or_event, 'tee'))
+        if (graphic_keywords)          queries.push(join(brand, graphic_keywords, 'vintage tee', decade))
+        if (datePart)                  queries.push(join(brand, datePart, 'vintage tee'))
+        if (brand)                     queries.push(join(brand, 'vintage tee'))
+        if (brand)                     queries.push(brand)
+
+      } else if (style === 'sports') {
+        if (tour_or_event && datePart) queries.push(join('vintage', brand, tour_or_event, datePart, 'tee'))
+        if (tour_or_event)             queries.push(join('vintage', brand, tour_or_event, 'tee'))
+        if (sport && datePart)         queries.push(join('vintage', brand, sport, datePart, 'tee'))
+        if (datePart)                  queries.push(join('vintage', brand, datePart, 'tee'))
+        if (sport)                     queries.push(join('vintage', brand, sport, 'tee'))
+                                       queries.push(join('vintage', brand, 'tee'))
+        if (brand)                     queries.push(brand)
+
+      } else if (style === 'souvenir') {
+        const place = join(brand, location) || 'vintage'
+        if (tour_or_event && datePart) queries.push(join(place, tour_or_event, datePart, 'vintage tee'))
+        if (tour_or_event)             queries.push(join(place, tour_or_event, 'vintage tee'))
+        if (datePart)                  queries.push(join('vintage', place, datePart, 'tee'))
+                                       queries.push(join('vintage', place, 'souvenir tee'))
+                                       queries.push(join('vintage', place, 'tee'))
+        if (place)                     queries.push(place)
+
+      } else {
+        const brandWithLocation = join(brand, location) || 'vintage tee'
+        if (graphic_keywords && datePart) queries.push(join(brandWithLocation, graphic_keywords, datePart, 'vintage tee'))
+        if (graphic_keywords)             queries.push(join(brandWithLocation, graphic_keywords, 'vintage tee'))
+        if (tour_or_event)                queries.push(join(brandWithLocation, tour_or_event, 'vintage tee'))
+        if (datePart)                     queries.push(join(brandWithLocation, datePart, 'vintage tee'))
+                                          queries.push(join(brandWithLocation, 'vintage tee'))
+                                          queries.push(brandWithLocation)
+      }
+
+      // Deduplicate while preserving order — filter out any falsy entries
+      const seen = new Set<string>()
+      const uniqueQueries = queries.filter((q) => {
+        if (!q) return false
+        const k = q.toLowerCase()
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
+
       for (const q of uniqueQueries) {
         items = await browseSearch(token, q, 10)
         if (items.length > 0) {

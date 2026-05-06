@@ -31,34 +31,69 @@ const fmtCompact = (v) => {
 };
 
 function formatTooltipDate(ts, rangeKey) {
+  if (!ts || ts <= 0) return '—';
   const d = new Date(ts);
+  if (isNaN(d.getTime())) return '—';
   if (rangeKey === '1D') {
     return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+function validTs(raw) {
+  if (!raw) return null;
+  const ms = new Date(raw).getTime();
+  return (!isNaN(ms) && ms > 0) ? ms : null;
+}
+
 /**
  * Build a portfolio value timeline from raw price_history rows.
- * Returns [{date: ms, value: $}] sorted ascending.
+ * Skips any entry whose recorded_at is null, 0, or otherwise invalid.
  */
 function buildTimeline(history) {
-  if (history.length === 0) return [];
+  if (!history.length) return [];
 
-  const sorted = [...history].sort(
-    (a, b) => new Date(a.recorded_at) - new Date(b.recorded_at),
-  );
+  const valid = history.filter(e => validTs(e.recorded_at) !== null);
+  if (!valid.length) return [];
 
-  const current = {};   // shirt_id → latest price
+  const sorted = [...valid].sort((a, b) => validTs(a.recorded_at) - validTs(b.recorded_at));
+
+  const current = {};
   const points  = [];
 
   for (const entry of sorted) {
     current[entry.shirt_id] = entry.price;
     const total = Object.values(current).reduce((a, b) => a + b, 0);
-    points.push({ date: new Date(entry.recorded_at).getTime(), value: total });
+    points.push({ date: validTs(entry.recorded_at), value: total });
   }
 
-  // Extend to right now so the chart reaches the current moment
+  const last = points[points.length - 1];
+  if (last.date < Date.now() - 60_000) {
+    points.push({ date: Date.now(), value: last.value });
+  }
+
+  return points;
+}
+
+/**
+ * Fallback: synthesise chart points from shirts' created_at + current_value.
+ * Used when price_history is empty or contains only invalid timestamps.
+ */
+function buildSyntheticTimeline(shirts) {
+  const valued = shirts.filter(s => s.current_value != null && validTs(s.created_at) !== null);
+  if (!valued.length) return [];
+
+  const sorted = [...valued].sort((a, b) => validTs(a.created_at) - validTs(b.created_at));
+
+  const current = {};
+  const points  = [];
+
+  for (const shirt of sorted) {
+    current[shirt.id] = Number(shirt.current_value);
+    const total = Object.values(current).reduce((a, b) => a + b, 0);
+    points.push({ date: validTs(shirt.created_at), value: total });
+  }
+
   const last = points[points.length - 1];
   if (last.date < Date.now() - 60_000) {
     points.push({ date: Date.now(), value: last.value });
@@ -153,7 +188,7 @@ export default function Dashboard() {
         { data: recentData },
         { data: topData },
       ] = await Promise.all([
-        supabase.from('shirts').select('id, purchase_price, current_value'),
+        supabase.from('shirts').select('id, purchase_price, current_value, created_at'),
         supabase.from('price_history').select('shirt_id, price, recorded_at').order('recorded_at', { ascending: true }),
         supabase.from('shirts').select('id, brand, style, condition, current_value, created_at').order('created_at', { ascending: false }).limit(5),
         supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price').order('current_value', { ascending: false }).limit(5),
@@ -174,7 +209,11 @@ export default function Dashboard() {
   const shirtCount  = allShirts.length;
 
   // ── Chart data ─────────────────────────────────────────────────────────────
-  const allPoints = useMemo(() => buildTimeline(history), [history]);
+  const allPoints = useMemo(() => {
+    const fromHistory = buildTimeline(history);
+    if (fromHistory.length > 0) return fromHistory;
+    return buildSyntheticTimeline(allShirts);
+  }, [history, allShirts]);
   const chartData = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
 
   // Range-relative gain: compare current portfolio value vs. value at range start
