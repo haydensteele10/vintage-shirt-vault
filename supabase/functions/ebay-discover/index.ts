@@ -1,8 +1,10 @@
 const EBAY_CLIENT_ID     = Deno.env.get('EBAY_APP_ID')         ?? ''
 const EBAY_CLIENT_SECRET = Deno.env.get('EBAY_CLIENT_SECRET')  ?? ''
+const ANTHROPIC_API_KEY  = (Deno.env.get('ANTHROPIC_API_KEY')  ?? '').trim().replace(/[^\x20-\x7E]/g, '')
 
 const OAUTH_URL  = 'https://api.ebay.com/identity/v1/oauth2/token'
 const BROWSE_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search'
+const CLAUDE_URL = 'https://api.anthropic.com/v1/messages'
 
 const cors = {
   'Access-Control-Allow-Origin':  '*',
@@ -34,9 +36,24 @@ async function getAccessToken(): Promise<string> {
 }
 
 // deno-lint-ignore no-explicit-any
-async function browseSearch(token: string, query: string, limit = 8): Promise<any[]> {
-  const params = new URLSearchParams({ q: query, limit: String(limit) })
-  console.log('[ebay-discover] searching:', query)
+async function browseSearch(
+  token: string,
+  query: string,
+  limit = 8,
+  minPrice = 25,
+  maxPrice?: number,
+): Promise<any[]> {
+  const priceRange = maxPrice != null ? `${minPrice}..${maxPrice}` : `${minPrice}..`
+  const priceFilter = `price:[${priceRange}],priceCurrency:USD`
+
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+    filter: priceFilter,
+  })
+
+  console.log('[ebay-discover] searching:', query, `filter:${priceFilter}`)
+
   const res = await fetch(`${BROWSE_URL}?${params}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -44,32 +61,132 @@ async function browseSearch(token: string, query: string, limit = 8): Promise<an
       'Content-Type': 'application/json',
     },
   })
+
   if (!res.ok) {
     console.warn('[ebay-discover] search failed for:', query, res.status)
     return []
   }
+
   const data = await res.json()
   return data?.itemSummaries ?? []
 }
 
 // deno-lint-ignore no-explicit-any
-function mapListings(items: any[]) {
-  return items.map((item) => ({
+function mapItem(item: any) {
+  return {
     title: item.title ?? '',
     price: parseFloat(item.price?.value ?? '0'),
     url:   item.itemWebUrl ?? '',
     image: item.image?.imageUrl ?? item.thumbnailImages?.[0]?.imageUrl ?? '',
+  }
+}
+
+// ─── AI filter ────────────────────────────────────────────────────────────────
+// Batch-filters all groups in a single Claude call for efficiency.
+
+type RawGroup = { id: string; title: string; query: string; items: ReturnType<typeof mapItem>[] }
+type FilteredGroup = { id: string; title: string; query: string; listings: ReturnType<typeof mapItem>[] }
+
+async function batchFilterWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
+  // Flatten all items, tagging each with its group id
+  const tagged: (ReturnType<typeof mapItem> & { groupId: string })[] = []
+  for (const group of groups) {
+    for (const item of group.items) {
+      tagged.push({ ...item, groupId: group.id })
+    }
+  }
+
+  let keepFlags: boolean[] = tagged.map(() => true)
+
+  if (ANTHROPIC_API_KEY && tagged.length > 0) {
+    const numbered = tagged.map((l, i) => `${i + 1}. ${l.title}`).join('\n')
+
+    const prompt = `You are a vintage clothing expert. Review these eBay listing titles and identify which ones are genuine vintage originals.
+
+REMOVE (return false) items that are:
+- Reprints, bootlegs, modern reproductions, or licensed re-releases
+- Fan-made or tribute items
+- New/recent items described as "style" or "inspired by"
+- Missing any vintage indicators (no year, no tour, suspiciously generic)
+
+KEEP (return true) items that appear to be:
+- Authentic vintage originals from the original era
+- Items with clear vintage signals: specific year, tour dates, single stitch, screen stars, copyright lines, event-specific text
+- Items where the title matches what a genuine vintage seller would write
+
+Listings:
+${numbered}
+
+Return a JSON boolean array with one value per listing (true = keep, false = remove).
+Example for 3 listings: [true, false, true]
+Return ONLY the JSON array, no other text.`
+
+    try {
+      const res = await fetch(CLAUDE_URL, {
+        method: 'POST',
+        headers: {
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const text: string = data.content?.[0]?.text ?? ''
+        console.log('[ebay-discover] AI filter response (first 120):', text.substring(0, 120))
+
+        const match = text.match(/\[[\s\S]*?\]/)
+        if (match) {
+          const arr = JSON.parse(match[0])
+          if (Array.isArray(arr) && arr.length === tagged.length) {
+            keepFlags = arr.map((v) => Boolean(v))
+          }
+        }
+      } else {
+        console.warn('[ebay-discover] AI filter HTTP error:', res.status)
+      }
+    } catch (err) {
+      console.warn('[ebay-discover] AI filter error:', (err as Error).message)
+    }
+  }
+
+  // Reassemble groups
+  const byGroup = new Map<string, ReturnType<typeof mapItem>[]>()
+  for (const g of groups) byGroup.set(g.id, [])
+
+  tagged.forEach((item, i) => {
+    if (keepFlags[i]) {
+      byGroup.get(item.groupId)!.push({
+        title: item.title,
+        price: item.price,
+        url:   item.url,
+        image: item.image,
+      })
+    }
+  })
+
+  return groups.map((g) => ({
+    id:       g.id,
+    title:    g.title,
+    query:    g.query,
+    listings: byGroup.get(g.id) ?? [],
   }))
 }
 
-// Returns the top-N most frequent values from an array
+// ─── Collection analysis helpers ──────────────────────────────────────────────
+
 function topN(arr: string[], n: number): string[] {
   const counts = new Map<string, number>()
   for (const val of arr) {
     const key = val.toLowerCase().trim()
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
-  // Sort by count desc, map back to original casing
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
   const results: string[] = []
   const seen = new Set<string>()
@@ -81,7 +198,6 @@ function topN(arr: string[], n: number): string[] {
       if (results.length >= n) break
     }
   }
-  // Re-sort results by frequency
   return results
     .sort((a, b) => (counts.get(b.toLowerCase().trim()) ?? 0) - (counts.get(a.toLowerCase().trim()) ?? 0))
     .slice(0, n)
@@ -89,10 +205,10 @@ function topN(arr: string[], n: number): string[] {
 
 function styleLabel(style: string): string {
   switch (style) {
-    case 'band_tee':  return 'vintage band tees'
-    case 'sports':    return 'vintage sports tees'
-    case 'workwear':  return 'vintage workwear'
-    case 'souvenir':  return 'vintage souvenir tees'
+    case 'band_tee':  return 'band tees'
+    case 'sports':    return 'sports tees'
+    case 'workwear':  return 'workwear'
+    case 'souvenir':  return 'souvenir tees'
     default:          return 'vintage tees'
   }
 }
@@ -124,68 +240,105 @@ Deno.serve(async (req) => {
 
     const token = await getAccessToken()
 
-    // ── Analyse the collection ──────────────────────────────────────────────
-    const brands = shirts.map((s: { brand?: string }) => s.brand).filter(Boolean) as string[]
-    const eras   = shirts.map((s: { era?: string })   => s.era).filter(Boolean) as string[]
-    const styles = shirts.map((s: { style?: string }) => s.style).filter(Boolean) as string[]
+    // ── Analyse the collection ─────────────────────────────────────────────
+    // deno-lint-ignore no-explicit-any
+    const brands = shirts.map((s: any) => s.brand).filter(Boolean) as string[]
+    // deno-lint-ignore no-explicit-any
+    const eras   = shirts.map((s: any) => s.era).filter(Boolean) as string[]
+    // deno-lint-ignore no-explicit-any
+    const styles = shirts.map((s: any) => s.style).filter(Boolean) as string[]
+    const values = shirts
+      // deno-lint-ignore no-explicit-any
+      .map((s: any) => Number(s.current_est_value))
+      .filter((v: number) => v > 0) as number[]
 
     const topBrands = topN(brands, 3)
     const topEra    = topN(eras, 1)[0] ?? null
     const topStyle  = topN(styles, 1)[0] ?? null
+    const avgValue  = values.length > 0
+      ? values.reduce((a, b) => a + b, 0) / values.length
+      : null
 
-    const groups: { id: string; title: string; listings: ReturnType<typeof mapListings> }[] = []
+    // ── Build search task list (up to 10 total) ────────────────────────────
+    type SearchTask = { id: string; title: string; query: string; limit: number; minPrice?: number; maxPrice?: number }
+    const tasks: SearchTask[] = []
 
-    // ── Group 1: More from artists/brands you collect ───────────────────────
+    // 1 — More from top artists
     if (topBrands.length > 0) {
-      // Run brand searches in parallel
-      const brandResults = await Promise.all(
-        topBrands.map((brand) => browseSearch(token, `${brand} vintage tee`, 6))
-      )
-      const brandListings = brandResults.flatMap(mapListings)
-
-      if (brandListings.length > 0) {
-        const brandNames = topBrands.slice(0, 2).join(' & ')
-        groups.push({
-          id: 'artists',
-          title: `More from ${brandNames}`,
-          listings: brandListings.slice(0, 15),
-        })
+      const label = topBrands.slice(0, 2).join(' & ')
+      for (const brand of topBrands.slice(0, 2)) {
+        tasks.push({ id: 'artists', title: `More from ${label}`, query: `${brand} vintage tee single stitch`, limit: 6 })
       }
     }
 
-    // ── Group 2: Similar era shirts ─────────────────────────────────────────
+    // 2 — Similar era
     if (topEra) {
-      // "Mid 90s" → "90s", "Early 80s" → "80s"
       const decadeMatch = topEra.match(/\d{2}s/)
       const decade = decadeMatch ? decadeMatch[0] : topEra
-
-      const items = await browseSearch(token, `vintage ${decade} tee`, 10)
-      const listings = mapListings(items)
-
-      if (listings.length > 0) {
-        groups.push({
-          id: 'era',
-          title: `More from the ${decade}`,
-          listings,
-        })
-      }
+      tasks.push({ id: 'era', title: `More from the ${decade}`, query: `vintage ${decade} tee single stitch`, limit: 8 })
     }
 
-    // ── Group 3: Same style ──────────────────────────────────────────────────
+    // 3 — Same style
     if (topStyle) {
-      const items = await browseSearch(token, styleQuery(topStyle), 10)
-      const listings = mapListings(items)
+      tasks.push({
+        id: 'style',
+        title: `More ${styleLabel(topStyle)}`,
+        query: `${styleQuery(topStyle)} single stitch`,
+        limit: 8,
+      })
+    }
 
-      if (listings.length > 0) {
-        groups.push({
-          id: 'style',
-          title: `More ${styleLabel(topStyle)}`,
-          listings,
-        })
+    // 4 — In your price range (only if meaningful average exists)
+    if (avgValue && avgValue >= 25) {
+      const minP = Math.max(25, Math.round(avgValue * 0.5))
+      const maxP = Math.round(avgValue * 1.75)
+      tasks.push({ id: 'price_range', title: 'In your price range', query: 'vintage tee single stitch', limit: 8, minPrice: minP, maxPrice: maxP })
+    }
+
+    // 5-10 — Fixed discovery categories
+    tasks.push(
+      { id: 'trending',      title: 'Trending in vintage',    query: 'vintage tee 80s 90s single stitch',      limit: 8 },
+      { id: 'single_stitch', title: 'Single stitch gems',     query: 'vintage single stitch tee',              limit: 8 },
+      { id: 'tour_tees',     title: 'Rare tour tees',         query: 'vintage tour tee concert single stitch', limit: 8 },
+      { id: 'sportswear',    title: 'Vintage sportswear',     query: 'vintage jersey sports single stitch',    limit: 8 },
+      { id: 'grails',        title: 'High value grails',      query: 'vintage rare tee deadstock',             limit: 8, minPrice: 100 },
+      { id: 'deadstock',     title: 'Deadstock finds',        query: 'deadstock vintage tee screen stars',     limit: 8 },
+    )
+
+    // ── Run all searches in parallel ───────────────────────────────────────
+    const searchResults = await Promise.all(
+      tasks.map((t) => browseSearch(token, t.query, t.limit, t.minPrice ?? 25, t.maxPrice))
+    )
+
+    // Merge tasks that share the same group id (e.g., multiple brand searches → one 'artists' group)
+    const groupMap = new Map<string, RawGroup>()
+    tasks.forEach((task, i) => {
+      if (!groupMap.has(task.id)) {
+        groupMap.set(task.id, { id: task.id, title: task.title, query: task.query, items: [] })
+      }
+      groupMap.get(task.id)!.items.push(...searchResults[i].map(mapItem))
+    })
+
+    // Deduplicate group order (first appearance wins)
+    const seen = new Set<string>()
+    const rawGroups: RawGroup[] = []
+    for (const task of tasks) {
+      if (!seen.has(task.id)) {
+        seen.add(task.id)
+        const g = groupMap.get(task.id)
+        if (g && g.items.length > 0) rawGroups.push(g)
       }
     }
 
-    console.log('[ebay-discover] groups returned:', groups.map(g => `${g.id}(${g.listings.length})`).join(', '))
+    // ── AI filter all results in one batch call ────────────────────────────
+    const filtered = await batchFilterWithAI(rawGroups)
+
+    const groups = filtered
+      .filter((g) => g.listings.length > 0)
+      .map((g) => ({ ...g, listings: g.listings.slice(0, 12) }))
+      .slice(0, 10)
+
+    console.log('[ebay-discover] groups returned:', groups.map((g) => `${g.id}(${g.listings.length})`).join(', '))
 
     return new Response(JSON.stringify({ groups }), {
       status: 200,

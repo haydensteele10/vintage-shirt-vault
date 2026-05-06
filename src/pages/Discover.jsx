@@ -12,6 +12,7 @@ function SkeletonCard() {
         <div className="h-3 bg-gray-800 rounded animate-pulse" />
         <div className="h-3 w-3/4 bg-gray-800 rounded animate-pulse" />
         <div className="h-4 w-1/2 bg-gray-800 rounded animate-pulse mt-1" />
+        <div className="h-6 w-full bg-gray-800/60 rounded-lg animate-pulse mt-2" />
       </div>
     </div>
   );
@@ -25,9 +26,12 @@ function DiscoverSkeleton() {
         <div className="h-3 w-52 bg-gray-800 rounded animate-pulse" />
       </div>
 
-      {[0, 1, 2].map((i) => (
+      {[0, 1, 2, 3, 4].map((i) => (
         <section key={i}>
-          <div className="h-4 w-44 bg-gray-800 rounded animate-pulse mx-4 sm:mx-6 mb-3" />
+          <div className="flex items-center justify-between px-4 sm:px-6 mb-3">
+            <div className="h-4 w-44 bg-gray-800 rounded animate-pulse" />
+            <div className="h-3 w-14 bg-gray-800 rounded animate-pulse" />
+          </div>
           <div className="flex gap-3 overflow-hidden px-4 sm:px-6">
             {[0, 1, 2, 3].map((j) => (
               <SkeletonCard key={j} />
@@ -69,12 +73,20 @@ function ListingCard({ listing }) {
       </div>
 
       <div className="p-3">
-        <p className="text-[11px] text-gray-400 leading-snug line-clamp-2 mb-2 group-hover:text-gray-300 transition-colors">
+        <p className="text-[11px] text-gray-400 leading-snug line-clamp-2 mb-1.5 group-hover:text-gray-300 transition-colors">
           {listing.title}
         </p>
-        <p className="text-sm font-bold text-amber-400 tabular-nums">
+        <p className="text-sm font-bold text-amber-400 tabular-nums mb-2.5">
           ${listing.price.toFixed(2)}
         </p>
+        <div className="flex items-center justify-center gap-1 py-1.5 rounded-lg bg-gray-800/70 border border-gray-700/50 group-hover:bg-amber-500/10 group-hover:border-amber-500/30 transition-colors">
+          <span className="text-[10px] font-semibold text-gray-400 group-hover:text-amber-400 transition-colors tracking-wide">
+            View on eBay
+          </span>
+          <svg className="w-3 h-3 text-gray-600 group-hover:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </div>
       </div>
     </a>
   );
@@ -83,11 +95,21 @@ function ListingCard({ listing }) {
 // ─── Group section ────────────────────────────────────────────────────────────
 
 function GroupSection({ group }) {
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(group.query)}`;
+
   return (
     <section>
-      <h2 className="text-sm font-semibold text-gray-300 px-4 sm:px-6 mb-3">
-        {group.title}
-      </h2>
+      <div className="flex items-center justify-between px-4 sm:px-6 mb-3">
+        <h2 className="text-sm font-semibold text-gray-300">{group.title}</h2>
+        <a
+          href={ebayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-amber-500/60 hover:text-amber-400 active:text-amber-300 transition-colors"
+        >
+          See more →
+        </a>
+      </div>
       <div
         className="flex gap-3 overflow-x-auto px-4 sm:px-6 pb-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -147,7 +169,7 @@ export default function Discover() {
     try {
       const { data: shirts, error: dbError } = await supabase
         .from('shirts')
-        .select('brand, style, era, year');
+        .select('brand, style, era, year, current_est_value');
 
       if (dbError) throw new Error(dbError.message);
       if (!shirts?.length) {
@@ -166,6 +188,8 @@ export default function Discover() {
 
   useEffect(() => {
     load();
+    // Intentionally omitting `load` — we want this to fire once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <DiscoverSkeleton />;
@@ -176,7 +200,7 @@ export default function Discover() {
     <div className="space-y-8 pb-24">
       <div className="px-4 sm:px-6 pt-2">
         <h1 className="text-xl font-bold text-gray-50">Discover</h1>
-        <p className="text-xs text-gray-500 mt-1">Curated picks based on your collection</p>
+        <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
       </div>
 
       {groups.map((group) => (
