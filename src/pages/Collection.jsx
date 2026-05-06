@@ -1,18 +1,65 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 
-const STYLES = ['band_tee', 'sports', 'workwear', 'souvenir', 'other'];
-const CONDITIONS = ['Mint', 'Excellent', 'Good', 'Fair', 'Poor'];
-const SORTS = [
-  { value: 'created_at:desc',      label: 'Newest first' },
-  { value: 'brand:asc',            label: 'Brand A–Z' },
-  { value: 'current_value:desc',   label: 'Highest value' },
-  { value: 'purchase_price:desc',  label: 'Highest cost' },
+// ─── Filter / sort config ─────────────────────────────────────────────────────
+
+const ERAS = [
+  { value: '',        label: 'All eras' },
+  { value: '70s',     label: '70s' },
+  { value: '80s',     label: '80s' },
+  { value: '90s',     label: '90s' },
+  { value: '00s',     label: '00s' },
+  { value: 'unknown', label: 'Unknown' },
 ];
 
-const selectCls = 'bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all appearance-none cursor-pointer';
+const STYLES = [
+  { value: '',         label: 'All styles' },
+  { value: 'band_tee', label: 'Band Tee' },
+  { value: 'sports',   label: 'Sports' },
+  { value: 'workwear', label: 'Workwear' },
+  { value: 'souvenir', label: 'Souvenir' },
+  { value: 'other',    label: 'Other' },
+];
+
+const CONDITIONS = [
+  { value: '',          label: 'All conditions' },
+  { value: 'Mint',      label: 'Mint' },
+  { value: 'Excellent', label: 'Excellent' },
+  { value: 'Good',      label: 'Good' },
+  { value: 'Fair',      label: 'Fair' },
+  { value: 'Poor',      label: 'Poor' },
+];
+
+const SORTS = [
+  { value: 'date_desc',  label: 'Recently Added' },
+  { value: 'value_desc', label: 'Highest Value' },
+  { value: 'value_asc',  label: 'Lowest Value' },
+  { value: 'gain_desc',  label: 'Biggest Gain' },
+  { value: 'brand_asc',  label: 'Brand A–Z' },
+];
+
+const DEFAULT_SORT = 'date_desc';
+
+const selectCls = 'flex-none bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all appearance-none cursor-pointer';
+
+// Tailwind arbitrary-variant styling for both range slider thumbs
+const rangeCls = [
+  'absolute w-full h-full appearance-none bg-transparent cursor-pointer pointer-events-none',
+  '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto',
+  '[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4',
+  '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500',
+  '[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-gray-950',
+  '[&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing',
+  '[&::-webkit-slider-runnable-track]:bg-transparent',
+  '[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto',
+  '[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4',
+  '[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-amber-500',
+  '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#030712]',
+  '[&::-moz-range-thumb]:cursor-grab',
+  '[&::-moz-range-track]:bg-transparent',
+].join(' ');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -157,8 +204,6 @@ function WallTile({ shirt }) {
           <span className="text-4xl opacity-10 select-none">👕</span>
         </div>
       )}
-
-      {/* Hover overlay with brand + price trend */}
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-250 flex flex-col justify-end p-2">
         <p className="text-white text-[11px] font-semibold leading-tight line-clamp-1">{shirt.brand}</p>
         {pct != null && Math.abs(pct) >= 0.5 && (
@@ -167,8 +212,6 @@ function WallTile({ shirt }) {
           </span>
         )}
       </div>
-
-      {/* Condition dot */}
       <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <ConditionBadge condition={shirt.condition} />
       </div>
@@ -205,20 +248,78 @@ function MosaicIcon({ active }) {
   );
 }
 
+// ─── Dual-handle value range slider ──────────────────────────────────────────
+
+function ValueRangeFilter({ min, max, globalMax, onMinChange, onMaxChange }) {
+  if (globalMax === 0) return null;
+
+  const minPct = (min / globalMax) * 100;
+  const maxPct = (max / globalMax) * 100;
+  const fmtVal = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
+
+  return (
+    <div className="flex-none bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2" style={{ minWidth: '176px' }}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] text-gray-500 font-medium tracking-wide">Value</span>
+        <span className="text-[10px] text-amber-400/80 tabular-nums font-mono">
+          {fmtVal(min)} – {fmtVal(max)}
+        </span>
+      </div>
+
+      <div className="relative h-5">
+        {/* Track */}
+        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 rounded-full bg-gray-700 pointer-events-none" />
+        {/* Active fill */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full bg-amber-500 pointer-events-none"
+          style={{ left: `${minPct}%`, right: `${100 - maxPct}%` }}
+        />
+        {/* Min handle */}
+        <input
+          type="range"
+          min={0}
+          max={globalMax}
+          step={5}
+          value={min}
+          onChange={(e) => onMinChange(Math.min(Number(e.target.value), max - 5))}
+          className={rangeCls}
+          style={{ zIndex: min > globalMax * 0.9 ? 5 : 3 }}
+        />
+        {/* Max handle */}
+        <input
+          type="range"
+          min={0}
+          max={globalMax}
+          step={5}
+          value={max}
+          onChange={(e) => onMaxChange(Math.max(Number(e.target.value), min + 5))}
+          className={rangeCls}
+          style={{ zIndex: 4 }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Collection() {
-  const [shirts, setShirts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [shirts, setShirts]       = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [search, setSearch] = useState('');
-  const [styleFilter, setStyleFilter] = useState('');
-  const [conditionFilter, setConditionFilter] = useState('');
-  const [sort, setSort] = useState('created_at:desc');
-  const [view, setView] = useState('grid'); // 'grid' | 'wall'
+  const [view, setView]           = useState('grid');
 
-  // Preload all front-photo URLs into the browser HTTP cache so lazy images
-  // appear instantly when they scroll into view.
+  // Filters
+  const [search, setSearch]               = useState('');
+  const [eraFilter, setEraFilter]         = useState('');
+  const [styleFilter, setStyleFilter]     = useState('');
+  const [conditionFilter, setConditionFilter] = useState('');
+  const [sort, setSort]                   = useState(DEFAULT_SORT);
+  const [rangeMin, setRangeMin]           = useState(0);
+  const [rangeMax, setRangeMax]           = useState(0);
+  const [globalMax, setGlobalMax]         = useState(0);
+
+  // Preload front-photo URLs so lazy images appear instantly on scroll
   useEffect(() => {
     shirts.forEach((shirt) => {
       const photo = shirt.photos?.find((p) => p.slot === 'front') ?? shirt.photos?.[0];
@@ -226,42 +327,32 @@ export default function Collection() {
     });
   }, [shirts]);
 
+  // Load all shirts once — all filtering/sorting happens client-side
   useEffect(() => {
     async function load() {
       setLoading(true);
       setLoadError(null);
-      let q = supabase
+
+      const { data, error } = await supabase
         .from('shirts')
-        .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at, price_last_checked');
-
-      if (styleFilter) q = q.eq('style', styleFilter);
-      if (conditionFilter) q = q.eq('condition', conditionFilter);
-
-      const [col, dir] = sort.split(':');
-      q = q.order(col, { ascending: dir === 'asc' });
-
-      const { data, error } = await q;
+        .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at, price_last_checked')
+        .order('created_at', { ascending: false });
 
       if (error) {
-        // price_last_checked column may not exist yet (migration not yet run).
-        // Fall back to the base columns so the page still works.
+        // price_last_checked may not exist yet — fall back without it
         if (error.message?.includes('price_last_checked')) {
-          const { data: fallback, error: fallbackErr } = await supabase
+          const { data: fallback, error: fbErr } = await supabase
             .from('shirts')
             .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at')
-            .order(col, { ascending: dir === 'asc' });
+            .order('created_at', { ascending: false });
 
-          if (fallbackErr) {
-            setLoadError(fallbackErr.message);
-            setLoading(false);
-            return;
-          }
-          let results = fallback ?? [];
-          if (search.trim()) {
-            const s = search.toLowerCase();
-            results = results.filter((r) => r.brand?.toLowerCase().includes(s));
-          }
+          if (fbErr) { setLoadError(fbErr.message); setLoading(false); return; }
+
+          const results = fallback ?? [];
+          const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
           setShirts(results);
+          setGlobalMax(max);
+          setRangeMax(max);
           setLoading(false);
           return;
         }
@@ -270,33 +361,101 @@ export default function Collection() {
         return;
       }
 
-      let results = data ?? [];
-
-      if (search.trim()) {
-        const s = search.toLowerCase();
-        results = results.filter((r) => r.brand?.toLowerCase().includes(s));
-      }
-
+      const results = data ?? [];
+      const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
       setShirts(results);
+      setGlobalMax(max);
+      setRangeMax(max);
       setLoading(false);
     }
     load();
-  }, [search, styleFilter, conditionFilter, sort]);
+  }, []);
 
+  // ── Client-side filter + sort ───────────────────────────────────────────────
+  const filteredShirts = useMemo(() => {
+    let result = [...shirts];
+
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      result = result.filter((r) => r.brand?.toLowerCase().includes(s));
+    }
+
+    if (eraFilter) {
+      if (eraFilter === 'unknown') {
+        result = result.filter((r) => !r.era);
+      } else {
+        result = result.filter((r) => r.era?.toLowerCase().includes(eraFilter));
+      }
+    }
+
+    if (styleFilter) result = result.filter((r) => r.style === styleFilter);
+    if (conditionFilter) result = result.filter((r) => r.condition === conditionFilter);
+
+    if (globalMax > 0 && (rangeMin > 0 || rangeMax < globalMax)) {
+      result = result.filter((r) => {
+        const val = Number(r.current_value || 0);
+        return val >= rangeMin && val <= rangeMax;
+      });
+    }
+
+    switch (sort) {
+      case 'value_desc':
+        result.sort((a, b) => (Number(b.current_value) || 0) - (Number(a.current_value) || 0));
+        break;
+      case 'value_asc':
+        result.sort((a, b) => (Number(a.current_value) || 0) - (Number(b.current_value) || 0));
+        break;
+      case 'gain_desc':
+        result.sort((a, b) => {
+          const gain = (r) => {
+            const pur = Number(r.purchase_price || 0);
+            return pur > 0 ? (Number(r.current_value || 0) - pur) / pur : -Infinity;
+          };
+          return gain(b) - gain(a);
+        });
+        break;
+      case 'brand_asc':
+        result.sort((a, b) => (a.brand ?? '').localeCompare(b.brand ?? ''));
+        break;
+      default: // date_desc — data already ordered by created_at desc from DB
+        break;
+    }
+
+    return result;
+  }, [shirts, search, eraFilter, styleFilter, conditionFilter, sort, rangeMin, rangeMax, globalMax]);
+
+  const hasFilters = !!(
+    search || eraFilter || styleFilter || conditionFilter ||
+    sort !== DEFAULT_SORT ||
+    rangeMin > 0 || (globalMax > 0 && rangeMax < globalMax)
+  );
+
+  function clearFilters() {
+    setSearch('');
+    setEraFilter('');
+    setStyleFilter('');
+    setConditionFilter('');
+    setSort(DEFAULT_SORT);
+    setRangeMin(0);
+    setRangeMax(globalMax);
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-50 tracking-tight">My Collection</h1>
           {!loading && (
             <p className="text-sm text-gray-500 mt-0.5">
-              {shirts.length} shirt{shirts.length !== 1 ? 's' : ''}
+              {hasFilters
+                ? `Showing ${filteredShirts.length} of ${shirts.length} shirt${shirts.length !== 1 ? 's' : ''}`
+                : `${shirts.length} shirt${shirts.length !== 1 ? 's' : ''}`}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* View toggle */}
           <div className="flex items-center gap-0.5 p-1 bg-gray-900 border border-gray-800/60 rounded-xl">
             <button
               onClick={() => setView('grid')}
@@ -322,29 +481,63 @@ export default function Collection() {
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex flex-wrap gap-2 p-3 bg-gray-900/60 border border-gray-800/60 rounded-2xl">
-        <input
-          type="text"
-          placeholder="Search by brand…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all w-44"
-        />
+      {/* Filter bar — horizontally scrollable on mobile */}
+      <div
+        className="overflow-x-auto pb-1"
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="flex gap-2 min-w-max">
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search brand…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-none w-40 bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all"
+          />
 
-        <select value={styleFilter} onChange={(e) => setStyleFilter(e.target.value)} className={selectCls}>
-          <option value="">All styles</option>
-          {STYLES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-        </select>
+          {/* Era */}
+          <select value={eraFilter} onChange={(e) => setEraFilter(e.target.value)} className={selectCls}>
+            {ERAS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
 
-        <select value={conditionFilter} onChange={(e) => setConditionFilter(e.target.value)} className={selectCls}>
-          <option value="">All conditions</option>
-          {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+          {/* Style */}
+          <select value={styleFilter} onChange={(e) => setStyleFilter(e.target.value)} className={selectCls}>
+            {STYLES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
 
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className={`${selectCls} ml-auto`}>
-          {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
+          {/* Condition */}
+          <select value={conditionFilter} onChange={(e) => setConditionFilter(e.target.value)} className={selectCls}>
+            {CONDITIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          {/* Sort */}
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className={selectCls}>
+            {SORTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          {/* Value range slider */}
+          <ValueRangeFilter
+            min={rangeMin}
+            max={rangeMax}
+            globalMax={globalMax}
+            onMinChange={setRangeMin}
+            onMaxChange={setRangeMax}
+          />
+
+          {/* Clear filters */}
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex-none flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-amber-400 border border-amber-500/30 rounded-xl hover:bg-amber-500/10 active:bg-amber-500/20 transition-colors whitespace-nowrap"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Load error */}
@@ -359,17 +552,17 @@ export default function Collection() {
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
-      ) : shirts.length === 0 ? (
+      ) : filteredShirts.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-5xl mb-4 opacity-20 select-none">👕</div>
           <p className="text-gray-400 font-medium">No shirts found</p>
-          {!styleFilter && !conditionFilter && !search ? (
+          {shirts.length === 0 ? (
             <Link to="/shirts/new" className="text-amber-400 hover:text-amber-300 text-sm mt-2 inline-block transition-colors">
               Add your first shirt →
             </Link>
           ) : (
             <button
-              onClick={() => { setSearch(''); setStyleFilter(''); setConditionFilter(''); }}
+              onClick={clearFilters}
               className="text-amber-400 hover:text-amber-300 text-sm mt-2 inline-block transition-colors"
             >
               Clear filters
@@ -378,11 +571,11 @@ export default function Collection() {
         </div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {shirts.map((shirt) => <ShirtCard key={shirt.id} shirt={shirt} />)}
+          {filteredShirts.map((shirt) => <ShirtCard key={shirt.id} shirt={shirt} />)}
         </div>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-px bg-gray-800 rounded-2xl overflow-hidden">
-          {shirts.map((shirt) => <WallTile key={shirt.id} shirt={shirt} />)}
+          {filteredShirts.map((shirt) => <WallTile key={shirt.id} shirt={shirt} />)}
         </div>
       )}
     </div>
