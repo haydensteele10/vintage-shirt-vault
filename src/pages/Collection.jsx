@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
@@ -61,6 +61,10 @@ const rangeCls = [
   '[&::-moz-range-track]:bg-transparent',
 ].join(' ');
 
+// ─── Image cache ──────────────────────────────────────────────────────────────
+// Module-level — survives component unmounts and tab switches within the session.
+const loadedUrls = new Set();
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(iso) {
@@ -106,25 +110,57 @@ function PriceTrend({ current, purchase }) {
   );
 }
 
-// ─── Lazy image with blur-out placeholder ─────────────────────────────────────
+// ─── Lazy image with smart placeholder ───────────────────────────────────────
+// Three cases:
+//   1. Session cache hit  (loadedUrls has src) → no overlay at all, instant display
+//   2. HTTP cache hit     (img.complete = true on mount) → useLayoutEffect hides
+//                         the overlay before the first paint — no visible flash
+//   3. Fresh network load → pulse overlay fades out when onLoad fires
 
 function LazyShirtImage({ src, alt, imgClassName, style }) {
-  const [loaded, setLoaded] = useState(false);
+  const preloaded = !!src && loadedUrls.has(src);
+  const [loaded, setLoaded] = useState(preloaded);
+  const imgRef = useRef(null);
+
+  // Runs synchronously before the browser paints, so a browser-cached image
+  // (img.complete === true) collapses the overlay before the user ever sees it.
+  useLayoutEffect(() => {
+    const img = imgRef.current;
+    if (!loaded && img && img.complete && img.naturalWidth > 0) {
+      if (src) loadedUrls.add(src);
+      setLoaded(true);
+    }
+    // Intentionally only on mount — we're reading the initial DOM state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleLoad() {
+    if (src) loadedUrls.add(src);
+    setLoaded(true);
+  }
+
   return (
     <>
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         loading="lazy"
         decoding="async"
         className={`w-full h-full ${imgClassName}`}
         style={style}
-        onLoad={() => setLoaded(true)}
+        onLoad={handleLoad}
       />
-      <div
-        className="absolute inset-0 bg-gray-800 animate-pulse pointer-events-none transition-opacity duration-700"
-        style={{ opacity: loaded ? 0 : 1 }}
-      />
+      {/* Only render the overlay for images not already in the session cache.
+          CSS transition fades it out on first network load; for cache hits the
+          useLayoutEffect above sets loaded=true before paint so opacity is 0
+          before the browser renders — no flicker. */}
+      {!preloaded && (
+        <div
+          className="absolute inset-0 bg-gray-800 animate-pulse pointer-events-none transition-opacity duration-500"
+          style={{ opacity: loaded ? 0 : 1 }}
+        />
+      )}
     </>
   );
 }
