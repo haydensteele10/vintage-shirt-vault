@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useSheet } from '../context/SheetContext';
 
 function HomeIcon() {
   return (
@@ -66,6 +67,8 @@ function Tab({ to, end, label, Icon }) {
 }
 
 export default function BottomNav() {
+  const { openAddShirt } = useSheet();
+
   return (
     <nav
       className="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/60"
@@ -75,17 +78,17 @@ export default function BottomNav() {
         <Tab to="/"           end  label="Home"       Icon={HomeIcon} />
         <Tab to="/collection"      label="Collection" Icon={CollectionIcon} />
 
-        {/* Center FAB */}
+        {/* Center FAB — opens the add-shirt sheet */}
         <div className="flex flex-col items-center gap-1 px-2 py-2 text-[10px] font-medium text-gray-500 flex-1">
-          <NavLink
-            to="/shirts/new"
+          <button
+            onClick={openAddShirt}
             className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 shadow-lg shadow-amber-500/30 ring-4 ring-gray-950 transition-colors"
             aria-label="Add shirt"
           >
             <svg className="w-6 h-6 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-          </NavLink>
+          </button>
           <span className="mt-0.5">Add</span>
         </div>
 

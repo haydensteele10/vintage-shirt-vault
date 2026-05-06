@@ -4,7 +4,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\" -Recurse -Depth 3)",
       "Bash(Select-Object FullName, PSIsContainer)",
       "Bash(Sort-Object FullName)",
-      "Bash(ConvertTo-String -Width 120)"
+      "Bash(ConvertTo-String -Width 120)",
+      "Bash(npx react-scripts *)"
     ]
   }
 }

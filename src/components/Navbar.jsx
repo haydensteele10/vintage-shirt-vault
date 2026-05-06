@@ -1,15 +1,19 @@
 import { NavLink } from 'react-router-dom';
 import { TagIcon } from './Logo';
 import { useTheme } from '../context/ThemeContext';
+import { useSheet } from '../context/SheetContext';
 
-const links = [
-  { to: '/',            label: 'Dashboard',  end: true  },
-  { to: '/collection',  label: 'Collection', end: false },
-  { to: '/shirts/new',  label: '+ Add Shirt',end: false },
-  { to: '/discover',    label: 'Discover',   end: false },
-  { to: '/activity',    label: 'Activity',   end: false },
-  { to: '/profile',     label: 'Profile',    end: false },
+const NAV_LINKS = [
+  { to: '/',           label: 'Dashboard',  end: true  },
+  { to: '/collection', label: 'Collection', end: false },
+  { to: '/discover',   label: 'Discover',   end: false },
+  { to: '/activity',   label: 'Activity',   end: false },
+  { to: '/profile',    label: 'Profile',    end: false },
 ];
+
+const activeCls   = 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/25';
+const inactiveCls = 'text-gray-400 hover:text-gray-100 hover:bg-gray-800/70';
+const linkCls     = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150';
 
 function SunIcon() {
   return (
@@ -30,6 +34,7 @@ function MoonIcon() {
 
 export default function Navbar() {
   const { isDark, toggle } = useTheme();
+  const { openAddShirt }   = useSheet();
 
   return (
     <header
@@ -43,28 +48,30 @@ export default function Navbar() {
         </NavLink>
 
         <nav className="hidden sm:flex items-center gap-0.5">
-          {links.map(({ to, label, end }) => (
+          {NAV_LINKS.map(({ to, label, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/25'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800/70'
-                }`
-              }
+              className={({ isActive }) => `${linkCls} ${isActive ? activeCls : inactiveCls}`}
             >
               {label}
             </NavLink>
           ))}
 
+          {/* Add Shirt — opens the bottom sheet */}
+          <button
+            onClick={openAddShirt}
+            className={`${linkCls} ${inactiveCls}`}
+          >
+            + Add Shirt
+          </button>
+
           {/* Theme toggle */}
           <button
             onClick={toggle}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="ml-1 p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800/70 transition-all duration-150"
+            className={`ml-1 p-2 rounded-lg ${inactiveCls}`}
           >
             {isDark ? <SunIcon /> : <MoonIcon />}
           </button>

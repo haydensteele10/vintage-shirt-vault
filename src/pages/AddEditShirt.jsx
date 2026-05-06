@@ -226,10 +226,11 @@ function ListingCard({ listing, checked, onToggle }) {
   );
 }
 
-export default function AddEditShirt() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+export default function AddEditShirt({ forceNewMode = false, onComplete, onCancel }) {
+  const { id: routeId } = useParams();
+  const id     = forceNewMode ? undefined : routeId;
   const isEdit = Boolean(id) && id !== 'new';
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -508,7 +509,11 @@ export default function AddEditShirt() {
     }
 
     setSaving(false);
-    navigate(`/shirts/${shirtId}`);
+    if (onComplete) {
+      onComplete(shirtId);
+    } else {
+      navigate(`/shirts/${shirtId}`);
+    }
   }
 
   const checkedListings = ebayListings.filter((_, i) => checkedIds.has(i));
@@ -521,14 +526,17 @@ export default function AddEditShirt() {
 
   return (
     <div className="max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-50 tracking-tight">
-          {isEdit ? 'Edit Shirt' : 'Add New Shirt'}
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {isEdit ? 'Update the details for this shirt.' : 'Add a new shirt to your vault.'}
-        </p>
-      </div>
+      {/* Page header — hidden when rendered inside the add-shirt sheet */}
+      {!onComplete && (
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-50 tracking-tight">
+            {isEdit ? 'Edit Shirt' : 'Add New Shirt'}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {isEdit ? 'Update the details for this shirt.' : 'Add a new shirt to your vault.'}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Identification */}
@@ -821,7 +829,10 @@ export default function AddEditShirt() {
           </button>
           <button
             type="button"
-            onClick={() => navigate(isEdit ? `/shirts/${id}` : '/collection')}
+            onClick={() => {
+              if (onCancel) onCancel();
+              else navigate(isEdit ? `/shirts/${id}` : '/collection');
+            }}
             disabled={isBusy}
             className="px-7 py-2.5 border border-gray-700 text-gray-500 hover:text-gray-200 hover:border-gray-600 font-semibold rounded-xl transition-all duration-150 disabled:opacity-40"
           >

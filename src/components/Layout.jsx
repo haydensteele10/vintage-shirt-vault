@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import BottomNav from './BottomNav';
 import Onboarding from './Onboarding';
+import AddShirtSheet from './AddShirtSheet';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function Layout() {
       </main>
       <BottomNav />
       {showOnboarding && <Onboarding onDone={finishOnboarding} />}
+      <AddShirtSheet />
     </div>
   );
 }

@@ -142,3 +142,104 @@ html.light-mode .border-b.border-gray-800\/60,
 html.light-mode .border-t.border-gray-800\/60 {
   border-color: rgba(188,212,232,0.60) !important;
 }
+
+/* ─── Add Shirt Sheet — always light-themed regardless of app theme ──────────
+   Applied via .sheet-light on the scrollable form wrapper inside the sheet.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Card / section surfaces */
+.sheet-light .bg-gray-900    { background-color: #ffffff !important; }
+.sheet-light .bg-gray-900\/70 { background-color: rgba(255,255,255,0.82) !important; }
+.sheet-light .bg-gray-900\/80 { background-color: rgba(255,255,255,0.90) !important; }
+
+/* Input / secondary surfaces */
+.sheet-light .bg-gray-800    { background-color: #e8f4fd !important; }
+.sheet-light .bg-gray-800\/50 { background-color: rgba(232,244,253,0.55) !important; }
+.sheet-light .bg-gray-800\/70 { background-color: rgba(220,238,252,0.78) !important; }
+.sheet-light .bg-gray-800\/40 { background-color: rgba(232,244,253,0.48) !important; }
+.sheet-light .bg-gray-800\/30 { background-color: rgba(232,244,253,0.38) !important; }
+.sheet-light .bg-gray-800\/60 { background-color: rgba(232,244,253,0.65) !important; }
+
+/* Button / tertiary */
+.sheet-light .bg-gray-700    { background-color: #d0e5f7 !important; }
+.sheet-light .bg-gray-700\/80 { background-color: rgba(208,229,247,0.85) !important; }
+
+/* Hover backgrounds */
+.sheet-light .hover\:bg-gray-800\/70:hover { background-color: rgba(208,232,248,0.88) !important; }
+.sheet-light .hover\:bg-gray-700\/80:hover { background-color: rgba(192,220,242,0.90) !important; }
+.sheet-light .hover\:bg-gray-700:hover     { background-color: #bcd8ee !important; }
+.sheet-light .hover\:bg-gray-600:hover     { background-color: #a8c8de !important; }
+.sheet-light .hover\:bg-gray-800:hover     { background-color: #d4e8f7 !important; }
+
+/* Overlay for photos (keep semi-dark for contrast) */
+.sheet-light .bg-gray-950\/70  { background-color: rgba(10,20,50,0.50) !important; }
+.sheet-light .bg-gray-950\/80  { background-color: rgba(10,20,50,0.55) !important; }
+
+/* Borders */
+.sheet-light .border-gray-800     { border-color: #c0d8ec !important; }
+.sheet-light .border-gray-800\/60 { border-color: rgba(192,216,236,0.72) !important; }
+.sheet-light .border-gray-800\/30 { border-color: rgba(192,216,236,0.40) !important; }
+.sheet-light .border-gray-700     { border-color: #aacce3 !important; }
+.sheet-light .border-gray-700\/80 { border-color: rgba(170,204,227,0.85) !important; }
+.sheet-light .border-gray-700\/60 { border-color: rgba(170,204,227,0.68) !important; }
+.sheet-light .border-gray-700\/40 { border-color: rgba(170,204,227,0.48) !important; }
+.sheet-light .border-gray-600     { border-color: #98bcd8 !important; }
+
+/* Hover borders */
+.sheet-light .hover\:border-gray-600:hover { border-color: #98bcd8 !important; }
+.sheet-light .hover\:border-gray-500:hover { border-color: #80acd0 !important; }
+
+/* Text */
+.sheet-light .text-gray-50,
+.sheet-light .text-gray-100  { color: #1a2a3a !important; }
+.sheet-light .text-gray-200  { color: #253545 !important; }
+.sheet-light .text-gray-300  { color: #344555 !important; }
+.sheet-light .text-gray-400  { color: #4a6070 !important; }
+.sheet-light .text-gray-500  { color: #5a7080 !important; }
+.sheet-light .text-gray-600  { color: #6a8090 !important; }
+.sheet-light .text-gray-700  { color: #88a4b4 !important; }
+
+/* Hover text */
+.sheet-light .hover\:text-gray-100:hover { color: #0f1f2f !important; }
+.sheet-light .hover\:text-gray-200:hover { color: #1a2a3a !important; }
+.sheet-light .hover\:text-gray-300:hover { color: #253545 !important; }
+.sheet-light .hover\:text-gray-400:hover { color: #344555 !important; }
+
+/* Placeholder */
+.sheet-light .placeholder-gray-600::placeholder { color: #96b4c4 !important; }
+
+/* Amber accents — darken for contrast on light surface */
+.sheet-light .text-amber-400      { color: #c47800 !important; }
+.sheet-light .text-amber-400\/50  { color: rgba(196,120,0,0.55) !important; }
+.sheet-light .bg-amber-500\/10    { background-color: rgba(196,120,0,0.09) !important; }
+.sheet-light .bg-amber-500\/15    { background-color: rgba(196,120,0,0.12) !important; }
+.sheet-light .border-amber-500\/25 { border-color: rgba(196,120,0,0.28) !important; }
+.sheet-light .border-amber-500\/30 { border-color: rgba(196,120,0,0.32) !important; }
+.sheet-light .border-amber-500\/50 { border-color: rgba(196,120,0,0.55) !important; }
+.sheet-light .shadow-\[0_0_12px_rgba\(245\,158\,11\,0\.15\)\] {
+  box-shadow: 0 0 12px rgba(196,120,0,0.18) !important;
+}
+
+/* AI / violet accents */
+.sheet-light .text-violet-300      { color: #6d28d9 !important; }
+.sheet-light .text-violet-200      { color: #5b21b6 !important; }
+.sheet-light .bg-violet-600\/20    { background-color: rgba(109,40,217,0.10) !important; }
+.sheet-light .bg-violet-600\/30    { background-color: rgba(109,40,217,0.16) !important; }
+.sheet-light .border-violet-500\/30 { border-color: rgba(109,40,217,0.28) !important; }
+.sheet-light .border-violet-500\/50 { border-color: rgba(109,40,217,0.45) !important; }
+.sheet-light .bg-violet-500\/10    { background-color: rgba(109,40,217,0.09) !important; }
+.sheet-light .border-violet-500\/20 { border-color: rgba(109,40,217,0.20) !important; }
+.sheet-light .text-violet-400      { color: #7c3aed !important; }
+
+/* AI-flagged / orange badge in listing cards */
+.sheet-light .text-orange-300\/90  { color: rgba(154,52,18,0.92) !important; }
+
+/* Ring colours (eBay listing card selection state) */
+.sheet-light .ring-gray-800\/60    { --tw-ring-color: rgba(192,216,236,0.65); }
+.sheet-light .ring-1               { }  /* keep ring width */
+
+/* Spinner border */
+.sheet-light .border-t-amber-400   { border-top-color: #c47800 !important; }
+.sheet-light .border-gray-800.border-t-amber-400 { border-color: #d0e5f7 !important; border-top-color: #c47800 !important; }
+
+/* Section divider line (flex-1 h-px bg-gray-800) — already handled by bg-gray-800 */
