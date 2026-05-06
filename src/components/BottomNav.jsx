@@ -20,7 +20,15 @@ function CollectionIcon() {
   );
 }
 
-function ActivityIcon() {
+function SearchIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+
+function FeedIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -51,17 +59,13 @@ function Tab({ to, end, label, Icon }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-2 py-3 text-[10px] font-medium transition-colors min-w-0 flex-1 ${
+        `flex flex-col items-center gap-1 px-1.5 py-3 text-[9px] font-medium transition-colors min-w-0 flex-1 ${
           isActive ? 'text-amber-400' : 'text-gray-500 active:text-gray-300'
         }`
       }
     >
-      {({ isActive }) => (
-        <>
-          <Icon />
-          <span>{label}</span>
-        </>
-      )}
+      <Icon />
+      <span>{label}</span>
     </NavLink>
   );
 }
@@ -77,9 +81,10 @@ export default function BottomNav() {
       <div className="flex items-end">
         <Tab to="/"           end  label="Home"       Icon={HomeIcon} />
         <Tab to="/collection"      label="Collection" Icon={CollectionIcon} />
+        <Tab to="/search"          label="Search"     Icon={SearchIcon} />
 
-        {/* Center FAB — opens the add-shirt sheet */}
-        <div className="flex flex-col items-center gap-1 px-2 py-2 text-[10px] font-medium text-gray-500 flex-1">
+        {/* Center FAB */}
+        <div className="flex flex-col items-center gap-1 px-1.5 py-2 text-[9px] font-medium text-gray-500 flex-1">
           <button
             onClick={openAddShirt}
             className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 shadow-lg shadow-amber-500/30 ring-4 ring-gray-950 transition-colors"
@@ -92,7 +97,7 @@ export default function BottomNav() {
           <span className="mt-0.5">Add</span>
         </div>
 
-        <Tab to="/activity"        label="Feed"       Icon={ActivityIcon} />
+        <Tab to="/activity"        label="Feed"       Icon={FeedIcon} />
         <Tab to="/discover"        label="Discover"   Icon={DiscoverIcon} />
         <Tab to="/profile"         label="Profile"    Icon={ProfileIcon} />
       </div>

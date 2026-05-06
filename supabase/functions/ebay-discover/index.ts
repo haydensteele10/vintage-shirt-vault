@@ -6,7 +6,6 @@ const OAUTH_URL  = 'https://api.ebay.com/identity/v1/oauth2/token'
 const BROWSE_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search'
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages'
 
-// Appended to every eBay query to push out cheap reprints and modern items
 const NEG_KEYWORDS = '-reprint -reproduction -inspired -style -new -NWT -modern -remake'
 
 function vintageQuery(base: string): string {
@@ -19,9 +18,27 @@ const cors = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
 }
 
+function jsonOk(data: unknown) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...cors, 'Content-Type': 'application/json' },
+  })
+}
+
+function jsonErr(msg: string, status = 500) {
+  console.error('[ebay-discover] error response:', msg)
+  return new Response(JSON.stringify({ error: msg }), {
+    status,
+    headers: { ...cors, 'Content-Type': 'application/json' },
+  })
+}
+
 // ─── eBay helpers ─────────────────────────────────────────────────────────────
 
 async function getAccessToken(): Promise<string> {
+  if (!EBAY_CLIENT_ID || !EBAY_CLIENT_SECRET) {
+    throw new Error('eBay credentials not configured (EBAY_APP_ID / EBAY_CLIENT_SECRET missing)')
+  }
   const credentials = btoa(`${EBAY_CLIENT_ID}:${EBAY_CLIENT_SECRET}`)
   const res = await fetch(OAUTH_URL, {
     method: 'POST',
@@ -36,9 +53,10 @@ async function getAccessToken(): Promise<string> {
   })
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`eBay OAuth failed (${res.status}): ${body}`)
+    throw new Error(`eBay OAuth failed (${res.status}): ${body.substring(0, 200)}`)
   }
   const { access_token } = await res.json()
+  if (!access_token) throw new Error('eBay OAuth returned no access_token')
   return access_token
 }
 
@@ -47,35 +65,44 @@ async function browseSearch(
   token: string,
   query: string,
   limit = 8,
-  minPrice = 40,
+  minPrice?: number,
   maxPrice?: number,
 ): Promise<any[]> {
-  const priceRange = maxPrice != null ? `${minPrice}..${maxPrice}` : `${minPrice}..`
-  const priceFilter = `price:[${priceRange}],priceCurrency:USD`
+  try {
+    const filterParts: string[] = ['priceCurrency:USD']
+    if (minPrice != null || maxPrice != null) {
+      const lo = minPrice ?? 0
+      const hi = maxPrice != null ? String(maxPrice) : ''
+      filterParts.unshift(`price:[${lo}..${hi}]`)
+    }
+    const filter = filterParts.join(',')
 
-  const params = new URLSearchParams({
-    q: query,
-    limit: String(limit),
-    filter: priceFilter,
-  })
+    // Build URL manually to avoid URLSearchParams double-encoding the filter brackets
+    const params = `q=${encodeURIComponent(query)}&limit=${limit}${filter ? `&filter=${encodeURIComponent(filter)}` : ''}`
+    console.log('[ebay-discover] searching:', query, filter ? `filter:${filter}` : 'no price filter')
 
-  console.log('[ebay-discover] searching:', query, `filter:${priceFilter}`)
+    const res = await fetch(`${BROWSE_URL}?${params}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'Content-Type': 'application/json',
+      },
+    })
 
-  const res = await fetch(`${BROWSE_URL}?${params}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      'Content-Type': 'application/json',
-    },
-  })
+    if (!res.ok) {
+      const body = await res.text()
+      console.warn(`[ebay-discover] browse failed (${res.status}) for "${query}":`, body.substring(0, 200))
+      return []
+    }
 
-  if (!res.ok) {
-    console.warn('[ebay-discover] search failed for:', query, res.status)
+    const data = await res.json()
+    const items = data?.itemSummaries ?? []
+    console.log(`[ebay-discover] "${query}" → ${items.length} results`)
+    return items
+  } catch (err) {
+    console.warn('[ebay-discover] browseSearch threw for', query, (err as Error).message)
     return []
   }
-
-  const data = await res.json()
-  return data?.itemSummaries ?? []
 }
 
 // deno-lint-ignore no-explicit-any
@@ -89,8 +116,6 @@ function mapItem(item: any) {
 }
 
 // ─── AI scoring ───────────────────────────────────────────────────────────────
-// Scores every listing 1-10 for vintage authenticity in a single Claude call.
-// Items scoring < 7 are dropped; survivors are sorted highest-score-first.
 
 type RawGroup = { id: string; title: string; query: string; items: ReturnType<typeof mapItem>[] }
 type FilteredGroup = { id: string; title: string; query: string; listings: ReturnType<typeof mapItem>[] }
@@ -103,7 +128,7 @@ async function batchScoreWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
     }
   }
 
-  // Default: borderline pass so non-AI path still surfaces some results
+  // Default: borderline pass so non-AI path still surfaces results
   let scores: number[] = tagged.map(() => 7)
 
   if (ANTHROPIC_API_KEY && tagged.length > 0) {
@@ -112,11 +137,11 @@ async function batchScoreWithAI(groups: RawGroup[]): Promise<FilteredGroup[]> {
     const prompt = `You are a vintage clothing authenticator. Score each eBay listing title 1-10 for likelihood of being an authentic vintage original.
 
 SCORING GUIDE:
-9-10 — Definitely vintage: contains specific year, tour date, copyright line, or explicit material signals (single stitch, screen stars, fruit of the loom, hanes, deadstock, made in usa, paper thin, 80s, 90s)
-7-8  — Likely vintage: mentions era, has event-specific or era-specific text, or seller language matches genuine vintage listings
-5-6  — Uncertain: could be vintage or modern reprint; insufficient signals to decide
-3-4  — Probably not vintage: generic or suspicious title, missing any era or authenticity signals
-1-2  — Definitely not vintage: reprint, bootleg, modern reproduction, fan-made, or explicitly "inspired by" item
+9-10 — Definitely vintage: specific year, tour date, copyright line, or material signals (single stitch, screen stars, fruit of the loom, hanes, deadstock, made in usa, 80s/90s)
+7-8  — Likely vintage: mentions era, event-specific text, or genuine vintage seller language
+5-6  — Uncertain: could be vintage or modern reprint
+3-4  — Probably not vintage: generic or suspicious title
+1-2  — Definitely not vintage: reprint, bootleg, modern reproduction, or explicitly "inspired by"
 
 Listings:
 ${numbered}
@@ -126,6 +151,9 @@ Example for 4 listings: [9, 2, 7, 8]
 Return ONLY the JSON array, no other text.`
 
     try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 20_000)
+
       const res = await fetch(CLAUDE_URL, {
         method: 'POST',
         headers: {
@@ -135,16 +163,17 @@ Return ONLY the JSON array, no other text.`
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 512,
+          max_tokens: 256,
           messages: [{ role: 'user', content: prompt }],
         }),
+        signal: controller.signal,
       })
+      clearTimeout(timeout)
 
       if (res.ok) {
         const data = await res.json()
         const text: string = data.content?.[0]?.text ?? ''
-        console.log('[ebay-discover] AI scores (first 120):', text.substring(0, 120))
-
+        console.log('[ebay-discover] AI scores:', text.substring(0, 120))
         const match = text.match(/\[[\s\S]*?\]/)
         if (match) {
           const arr = JSON.parse(match[0])
@@ -153,14 +182,15 @@ Return ONLY the JSON array, no other text.`
           }
         }
       } else {
-        console.warn('[ebay-discover] AI score HTTP error:', res.status)
+        console.warn('[ebay-discover] AI HTTP error:', res.status)
       }
     } catch (err) {
-      console.warn('[ebay-discover] AI score error:', (err as Error).message)
+      console.warn('[ebay-discover] AI error (falling back to defaults):', (err as Error).message)
     }
+  } else {
+    console.log('[ebay-discover] skipping AI scoring — no key or no items')
   }
 
-  // Reassemble groups: keep score >= 7, sort highest first
   const byGroup = new Map<string, { listing: ReturnType<typeof mapItem>; score: number }[]>()
   for (const g of groups) byGroup.set(g.id, [])
 
@@ -191,15 +221,14 @@ function topN(arr: string[], n: number): string[] {
     const key = val.toLowerCase().trim()
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
-  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
-  const results: string[] = []
   const seen = new Set<string>()
+  const results: string[] = []
   for (const val of arr) {
     const key = val.toLowerCase().trim()
-    if (!seen.has(key) && sorted.find(([k]) => k === key)) {
+    if (!seen.has(key)) {
       seen.add(key)
       results.push(val)
-      if (results.length >= n) break
+      if (results.length >= n * 3) break
     }
   }
   return results
@@ -233,88 +262,78 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
 
   try {
-    const { shirts } = await req.json()
+    console.log('[ebay-discover] invoked, method:', req.method)
 
-    if (!Array.isArray(shirts) || shirts.length === 0) {
-      return new Response(JSON.stringify({ groups: [] }), {
-        status: 200,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
+    let body: { shirts?: unknown } = {}
+    try {
+      body = await req.json()
+    } catch {
+      console.warn('[ebay-discover] could not parse request body, using empty')
     }
 
+    const { shirts } = body
+
+    if (!Array.isArray(shirts) || shirts.length === 0) {
+      console.log('[ebay-discover] no shirts in collection, returning empty groups')
+      return jsonOk({ groups: [] })
+    }
+
+    console.log('[ebay-discover] collection size:', shirts.length)
+
     const token = await getAccessToken()
+    console.log('[ebay-discover] eBay token obtained')
 
     // ── Analyse the collection ─────────────────────────────────────────────
     // deno-lint-ignore no-explicit-any
-    const brands = shirts.map((s: any) => s.brand).filter(Boolean) as string[]
+    const brands = (shirts as any[]).map((s) => s.brand).filter(Boolean) as string[]
     // deno-lint-ignore no-explicit-any
-    const eras   = shirts.map((s: any) => s.era).filter(Boolean) as string[]
+    const eras   = (shirts as any[]).map((s) => s.era).filter(Boolean) as string[]
     // deno-lint-ignore no-explicit-any
-    const styles = shirts.map((s: any) => s.style).filter(Boolean) as string[]
-    const values = shirts
-      // deno-lint-ignore no-explicit-any
-      .map((s: any) => Number(s.current_est_value))
-      .filter((v: number) => v > 0) as number[]
+    const styles = (shirts as any[]).map((s) => s.style).filter(Boolean) as string[]
 
     const topBrands = topN(brands, 3)
     const topEra    = topN(eras, 1)[0] ?? null
     const topStyle  = topN(styles, 1)[0] ?? null
-    const avgValue  = values.length > 0
-      ? values.reduce((a, b) => a + b, 0) / values.length
-      : null
 
-    // ── Build search task list (up to 10 total) ────────────────────────────
+    console.log('[ebay-discover] topBrands:', topBrands, '| topEra:', topEra, '| topStyle:', topStyle)
+
+    // ── Build search task list ────────────────────────────────────────────
     type SearchTask = { id: string; title: string; query: string; limit: number; minPrice?: number; maxPrice?: number }
     const tasks: SearchTask[] = []
 
-    // 1 — More from top artists
     if (topBrands.length > 0) {
       const label = topBrands.slice(0, 2).join(' & ')
       for (const brand of topBrands.slice(0, 2)) {
-        tasks.push({ id: 'artists', title: `More from ${label}`, query: vintageQuery(`${brand} vintage tee single stitch`), limit: 6 })
+        tasks.push({ id: 'artists', title: `More from ${label}`, query: vintageQuery(`${brand} vintage tee`), limit: 6 })
       }
     }
 
-    // 2 — Similar era
     if (topEra) {
       const decadeMatch = topEra.match(/\d{2}s/)
       const decade = decadeMatch ? decadeMatch[0] : topEra
       tasks.push({ id: 'era', title: `More from the ${decade}`, query: vintageQuery(`vintage ${decade} tee single stitch`), limit: 8 })
     }
 
-    // 3 — Same style
     if (topStyle) {
-      tasks.push({
-        id: 'style',
-        title: `More ${styleLabel(topStyle)}`,
-        query: vintageQuery(`${styleQuery(topStyle)} single stitch`),
-        limit: 8,
-      })
+      tasks.push({ id: 'style', title: `More ${styleLabel(topStyle)}`, query: vintageQuery(styleQuery(topStyle)), limit: 8 })
     }
 
-    // 4 — In your price range (only if meaningful average exists above the min threshold)
-    if (avgValue && avgValue >= 40) {
-      const minP = Math.max(40, Math.round(avgValue * 0.5))
-      const maxP = Math.round(avgValue * 1.75)
-      tasks.push({ id: 'price_range', title: 'In your price range', query: vintageQuery('vintage tee single stitch'), limit: 8, minPrice: minP, maxPrice: maxP })
-    }
-
-    // 5-10 — Fixed discovery categories
+    // Fixed discovery categories — no minimum price so results aren't blocked
     tasks.push(
       { id: 'trending',      title: 'Trending in vintage',    query: vintageQuery('vintage tee 80s 90s single stitch'),      limit: 8 },
       { id: 'single_stitch', title: 'Single stitch gems',     query: vintageQuery('vintage single stitch tee'),              limit: 8 },
       { id: 'tour_tees',     title: 'Rare tour tees',         query: vintageQuery('vintage tour tee concert single stitch'), limit: 8 },
-      { id: 'sportswear',    title: 'Vintage sportswear',     query: vintageQuery('vintage jersey sports single stitch'),    limit: 8 },
-      { id: 'grails',        title: 'High value grails',      query: vintageQuery('vintage rare tee deadstock'),             limit: 8, minPrice: 100 },
+      { id: 'sportswear',    title: 'Vintage sportswear',     query: vintageQuery('vintage jersey sports tee'),              limit: 8 },
+      { id: 'grails',        title: 'High value grails',      query: vintageQuery('vintage rare tee deadstock'),             limit: 8, minPrice: 75 },
       { id: 'deadstock',     title: 'Deadstock finds',        query: vintageQuery('deadstock vintage tee screen stars'),     limit: 8 },
     )
 
-    // ── Run all searches in parallel ───────────────────────────────────────
+    // ── Run all searches in parallel ──────────────────────────────────────
+    console.log('[ebay-discover] running', tasks.length, 'searches in parallel')
     const searchResults = await Promise.all(
-      tasks.map((t) => browseSearch(token, t.query, t.limit, t.minPrice ?? 40, t.maxPrice))
+      tasks.map((t) => browseSearch(token, t.query, t.limit, t.minPrice, t.maxPrice))
     )
 
-    // Merge tasks that share the same group id (e.g., multiple brand searches → one 'artists' group)
     const groupMap = new Map<string, RawGroup>()
     tasks.forEach((task, i) => {
       if (!groupMap.has(task.id)) {
@@ -323,7 +342,6 @@ Deno.serve(async (req) => {
       groupMap.get(task.id)!.items.push(...searchResults[i].map(mapItem))
     })
 
-    // Deduplicate group order (first appearance wins)
     const seen = new Set<string>()
     const rawGroups: RawGroup[] = []
     for (const task of tasks) {
@@ -334,25 +352,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── AI score all results in one batch call, drop < 7 ─────────────────
+    console.log('[ebay-discover] raw groups with results:', rawGroups.map((g) => `${g.id}(${g.items.length})`).join(', '))
+
+    // ── AI score all results in one batch call ────────────────────────────
     const filtered = await batchScoreWithAI(rawGroups)
 
     const groups = filtered
       .filter((g) => g.listings.length > 0)
       .map((g) => ({ ...g, listings: g.listings.slice(0, 12) }))
-      .slice(0, 10)
+      .slice(0, 8)
 
-    console.log('[ebay-discover] groups returned:', groups.map((g) => `${g.id}(${g.listings.length})`).join(', '))
+    console.log('[ebay-discover] final groups:', groups.map((g) => `${g.id}(${g.listings.length})`).join(', '))
 
-    return new Response(JSON.stringify({ groups }), {
-      status: 200,
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    })
+    return jsonOk({ groups })
   } catch (err) {
-    console.error('[ebay-discover] error:', (err as Error).message)
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    })
+    const msg = (err as Error).message ?? 'Unknown error'
+    console.error('[ebay-discover] unhandled error:', msg)
+    return jsonErr(msg)
   }
 })

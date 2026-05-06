@@ -6,6 +6,7 @@ import { useSheet } from '../context/SheetContext';
 const NAV_LINKS = [
   { to: '/',           label: 'Dashboard',  end: true  },
   { to: '/collection', label: 'Collection', end: false },
+  { to: '/search',     label: 'Search',     end: false },
   { to: '/discover',   label: 'Discover',   end: false },
   { to: '/activity',   label: 'Activity',   end: false },
   { to: '/profile',    label: 'Profile',    end: false },
