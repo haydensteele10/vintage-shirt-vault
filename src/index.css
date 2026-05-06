@@ -21,3 +21,124 @@
   ::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-gray-600; }
 }
+
+/* ─── Light Mode ─────────────────────────────────────────────────────────────
+   Applied when html has the .light-mode class.
+   Light theme: white/pale-blue surfaces · dark navy text · amber gold accents.
+   Uses !important to override Tailwind utility classes at equal specificity.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+html.light-mode {
+  color-scheme: light;
+}
+
+html.light-mode body {
+  background-color: #f0f7fd !important;
+  color: #1a2a3a !important;
+}
+
+html.light-mode ::-webkit-scrollbar-track { background-color: #e8f4fd; }
+html.light-mode ::-webkit-scrollbar-thumb { background-color: #b8d4e8; border-radius: 9999px; }
+html.light-mode ::-webkit-scrollbar-thumb:hover { background-color: #9abece; }
+
+/* ── Page / structural backgrounds ───────────────────────────────────────── */
+html.light-mode .bg-gray-950          { background-color: #f0f7fd !important; }
+html.light-mode .bg-gray-950\/90      { background-color: rgba(240,247,253,0.94) !important; }
+html.light-mode .bg-gray-950\/95      { background-color: rgba(240,247,253,0.97) !important; }
+/* Modal overlays — keep semi-dark for contrast against bright backgrounds */
+html.light-mode .bg-gray-950\/80      { background-color: rgba(10,30,60,0.45)   !important; }
+html.light-mode .bg-gray-950\/70      { background-color: rgba(10,30,60,0.35)   !important; }
+
+/* ── Card / surface backgrounds ──────────────────────────────────────────── */
+html.light-mode .bg-gray-900          { background-color: #ffffff !important; }
+html.light-mode .bg-gray-900\/50      { background-color: rgba(255,255,255,0.6) !important; }
+html.light-mode .bg-gray-900\/70      { background-color: rgba(255,255,255,0.8) !important; }
+html.light-mode .bg-gray-900\/80      { background-color: rgba(255,255,255,0.88) !important; }
+
+/* ── Input / secondary backgrounds ───────────────────────────────────────── */
+html.light-mode .bg-gray-800          { background-color: #e4f0fa !important; }
+html.light-mode .bg-gray-800\/80      { background-color: rgba(220,238,252,0.88) !important; }
+html.light-mode .bg-gray-800\/70      { background-color: rgba(220,238,252,0.80) !important; }
+html.light-mode .bg-gray-800\/60      { background-color: rgba(220,238,252,0.72) !important; }
+html.light-mode .bg-gray-800\/50      { background-color: rgba(220,238,252,0.60) !important; }
+html.light-mode .bg-gray-800\/40      { background-color: rgba(220,238,252,0.50) !important; }
+html.light-mode .bg-gray-800\/30      { background-color: rgba(220,238,252,0.40) !important; }
+
+/* ── Button / tertiary backgrounds ───────────────────────────────────────── */
+html.light-mode .bg-gray-700          { background-color: #c8ddf0 !important; }
+html.light-mode .bg-gray-700\/80      { background-color: rgba(200,221,240,0.88) !important; }
+html.light-mode .bg-gray-600          { background-color: #b0cce4 !important; }
+
+/* ── Hover background states ─────────────────────────────────────────────── */
+html.light-mode .hover\:bg-gray-800\/70:hover  { background-color: rgba(200,228,248,0.90) !important; }
+html.light-mode .hover\:bg-gray-800\/60:hover  { background-color: rgba(200,228,248,0.80) !important; }
+html.light-mode .hover\:bg-gray-800\/30:hover  { background-color: rgba(200,228,248,0.50) !important; }
+html.light-mode .hover\:bg-gray-800:hover      { background-color: #d4e8f7 !important; }
+html.light-mode .hover\:bg-gray-700\/80:hover  { background-color: rgba(185,214,238,0.90) !important; }
+html.light-mode .hover\:bg-gray-700:hover      { background-color: #bcd8ee !important; }
+html.light-mode .hover\:bg-gray-600:hover      { background-color: #a8c8de !important; }
+
+/* Active states */
+html.light-mode .active\:bg-gray-800:active    { background-color: #c8e0f2 !important; }
+
+/* ── Border colors ───────────────────────────────────────────────────────── */
+html.light-mode .border-gray-800          { border-color: #bcd4e8 !important; }
+html.light-mode .border-gray-800\/60      { border-color: rgba(188,212,232,0.75) !important; }
+html.light-mode .border-gray-800\/30      { border-color: rgba(188,212,232,0.45) !important; }
+html.light-mode .border-gray-800\/40      { border-color: rgba(188,212,232,0.55) !important; }
+html.light-mode .border-gray-700          { border-color: #a8c4d8 !important; }
+html.light-mode .border-gray-700\/80      { border-color: rgba(168,196,216,0.85) !important; }
+html.light-mode .border-gray-700\/60      { border-color: rgba(168,196,216,0.70) !important; }
+html.light-mode .border-gray-700\/50      { border-color: rgba(168,196,216,0.60) !important; }
+html.light-mode .border-gray-700\/40      { border-color: rgba(168,196,216,0.50) !important; }
+html.light-mode .border-gray-700\/30      { border-color: rgba(168,196,216,0.40) !important; }
+html.light-mode .border-gray-600          { border-color: #90b4cc !important; }
+html.light-mode .border-dashed.border-gray-700\/60 { border-color: rgba(160,192,215,0.55) !important; }
+
+/* Hover border */
+html.light-mode .hover\:border-gray-600:hover { border-color: #90b4cc !important; }
+html.light-mode .hover\:border-gray-500:hover { border-color: #78a4bc !important; }
+
+/* ── Text colors ─────────────────────────────────────────────────────────── */
+html.light-mode .text-gray-50   { color: #0f1f2f !important; }
+html.light-mode .text-gray-100  { color: #1a2a3a !important; }
+html.light-mode .text-gray-200  { color: #253545 !important; }
+html.light-mode .text-gray-300  { color: #344555 !important; }
+html.light-mode .text-gray-400  { color: #4a6070 !important; }
+html.light-mode .text-gray-500  { color: #5a7080 !important; }
+html.light-mode .text-gray-600  { color: #7090a0 !important; }
+html.light-mode .text-gray-700  { color: #88a4b4 !important; }
+html.light-mode .text-gray-800  { color: #a0b8c8 !important; }
+
+/* Hover text */
+html.light-mode .hover\:text-gray-100:hover { color: #0f1f2f !important; }
+html.light-mode .hover\:text-gray-200:hover { color: #1a2a3a !important; }
+html.light-mode .hover\:text-gray-300:hover { color: #253545 !important; }
+html.light-mode .hover\:text-gray-400:hover { color: #344555 !important; }
+
+/* ── Placeholder text ────────────────────────────────────────────────────── */
+html.light-mode .placeholder-gray-600::placeholder { color: #98b4c4 !important; }
+html.light-mode .placeholder-gray-700::placeholder { color: #a8c4d4 !important; }
+
+/* ── Amber accent adjustments (darken for contrast on light bg) ──────────── */
+html.light-mode .text-amber-400  { color: #c47800 !important; }
+html.light-mode .text-amber-300  { color: #d48800 !important; }
+
+/* ── Ring colors (spinner, avatar outlines) ──────────────────────────────── */
+html.light-mode .ring-gray-900   { --tw-ring-color: rgba(220,235,248,0.9); }
+html.light-mode .ring-gray-800   { --tw-ring-color: rgba(200,220,238,0.8); }
+html.light-mode .border-t-amber-400 { border-top-color: #c47800 !important; }
+
+/* ── Gradient overrides (page gradients, not photo overlays) ─────────────── */
+html.light-mode .from-amber-900\/40 { --tw-gradient-from: rgba(120,53,15,0.10); }
+html.light-mode .via-gray-900       { --tw-gradient-via: #ffffff; }
+html.light-mode .to-gray-900        { --tw-gradient-to: #ffffff; }
+
+/* ── Date input color-scheme fix ─────────────────────────────────────────── */
+html.light-mode .\[color-scheme\:dark\] { color-scheme: light; }
+
+/* ── Navbar border in light mode ─────────────────────────────────────────── */
+html.light-mode .border-b.border-gray-800\/60,
+html.light-mode .border-t.border-gray-800\/60 {
+  border-color: rgba(188,212,232,0.60) !important;
+}

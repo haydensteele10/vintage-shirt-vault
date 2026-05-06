@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ function ShowcasePicker({ shirts, current, onSave, onClose }) {
 export default function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   // ── Data state ──────────────────────────────────────────────────────────────
   const [profile, setProfile]             = useState(null);
@@ -330,6 +332,13 @@ export default function Profile() {
       setAddFriendMsg({ type: 'err', text: msg });
       return;
     }
+
+    // Log activity — fire and forget
+    supabase.from('activity_feed').insert({
+      user_id: user.id,
+      type: 'friend_added',
+      metadata: { friend_username: username },
+    });
 
     setAddFriendMsg({ type: 'ok', text: `Now following @${username}!` });
     setAddFriendInput('');
@@ -695,6 +704,36 @@ export default function Profile() {
           <p className="text-xs text-gray-600">
             Signed in as <span className="text-gray-400">{user?.email}</span>
           </p>
+
+          {/* Theme toggle */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl">
+            <div className="flex items-center gap-3">
+              {isDark ? (
+                <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                  <circle cx="12" cy="12" r="4" strokeLinecap="round" />
+                  <path strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+              <div>
+                <p className="text-sm font-medium text-gray-300">{isDark ? 'Dark Mode' : 'Light Mode'}</p>
+                <p className="text-xs text-gray-600">{isDark ? 'Switch to light theme' : 'Switch to dark theme'}</p>
+              </div>
+            </div>
+            <button
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-300 ${isDark ? 'bg-gray-700' : 'bg-amber-500'}`}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ${isDark ? 'left-0.5' : 'left-6'}`}
+              />
+            </button>
+          </div>
+
           <button
             onClick={handleSignOut}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 hover:border-red-500/40 text-red-400 hover:text-red-300 text-sm font-medium rounded-xl transition-all"

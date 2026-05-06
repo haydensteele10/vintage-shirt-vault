@@ -234,6 +234,7 @@ export default function AddEditShirt() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [slots, setSlots] = useState(EMPTY_SLOTS);
+  const [originalValue, setOriginalValue] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [error, setError] = useState(null);
@@ -254,6 +255,7 @@ export default function AddEditShirt() {
     if (!isEdit) return;
     supabase.from('shirts').select('*').eq('id', id).single().then(({ data }) => {
       if (!data) return;
+      setOriginalValue(data.current_value ?? null);
       setForm({
         brand: data.brand ?? '',
         era: data.era ?? '',
@@ -474,6 +476,34 @@ export default function AddEditShirt() {
         shirt_id: shirtId,
         price: payload.current_value,
         source: 'manual entry',
+      });
+    }
+
+    // Log activity event — fire and forget, don't block navigation
+    if (!isEdit) {
+      supabase.from('activity_feed').insert({
+        user_id: user.id,
+        type: 'shirt_added',
+        shirt_id: shirtId,
+        metadata: {
+          brand: payload.brand,
+          style: payload.style,
+          current_value: payload.current_value,
+        },
+      });
+    } else if (
+      payload.current_value != null &&
+      payload.current_value !== originalValue
+    ) {
+      supabase.from('activity_feed').insert({
+        user_id: user.id,
+        type: 'price_updated',
+        shirt_id: shirtId,
+        metadata: {
+          brand: payload.brand,
+          old_value: originalValue,
+          new_value: payload.current_value,
+        },
       });
     }
 
