@@ -50,22 +50,26 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
   const list = tab === 'followers' ? followers : following;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-[60]">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Sheet — overflow-hidden clips content to rounded corners; safe-area-inset-bottom pads iPhone home bar */}
+      {/* Sheet — anchored above the bottom nav bar (≈80px) + iPhone safe area.
+          Uses absolute positioning so it never fights with flex layout. */}
       <div
-        className="relative bg-gray-900 rounded-t-3xl border-t border-gray-800/60 flex flex-col overflow-hidden"
-        style={{ maxHeight: '70vh', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="absolute left-0 right-0 bg-gray-900 rounded-t-3xl border-t border-gray-800/60 overflow-hidden"
+        style={{
+          bottom: 'calc(80px + env(safe-area-inset-bottom))',
+          height: '80vh',
+        }}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+        <div className="flex justify-center pt-3 pb-2">
           <div className="w-10 h-1 rounded-full bg-gray-700" />
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex gap-1 px-4 pb-3 border-b border-gray-800/60 flex-shrink-0">
+        {/* Tab switcher — acts as the title row */}
+        <div className="flex gap-1 px-4 pb-3 border-b border-gray-800/60">
           {[
             { key: 'followers', label: `${followers.length} Followers` },
             { key: 'following', label: `${following.length} Following` },
@@ -84,21 +88,27 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
           ))}
         </div>
 
-        {/* List — overscroll-contain stops scroll chaining to the page behind */}
+        {/* Scrollable list — explicit height so items are immediately visible */}
         {list.length === 0 ? (
-          <div className="py-14 flex items-center justify-center flex-shrink-0">
+          <div
+            className="flex items-center justify-center"
+            style={{ height: 'calc(100% - 60px)' }}
+          >
             <p className="text-gray-600 text-sm">
               {tab === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </p>
           </div>
         ) : (
-          <ul className="overflow-y-auto overscroll-contain divide-y divide-gray-800/30">
+          <ul
+            className="divide-y divide-gray-800/30"
+            style={{ height: 'calc(100% - 60px)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+          >
             {list.map((person) => {
               const initials = (person.username ?? 'u').slice(0, 2).toUpperCase();
               const isFollowing = followingIds.has(person.id);
               return (
                 <li key={person.id} className="flex items-center gap-3 px-5 py-3.5">
-                  {/* Avatar */}
+                  {/* Initials / avatar */}
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
                     {person.avatar_url
                       ? <img src={person.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -106,12 +116,12 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
                     }
                   </div>
 
-                  {/* Username — min-w-0 lets truncate work inside flex */}
+                  {/* Username */}
                   <span className="flex-1 min-w-0 text-sm font-medium text-gray-300 truncate">
                     {person.username ? `@${person.username}` : 'Unknown collector'}
                   </span>
 
-                  {/* Action button */}
+                  {/* Follow / Unfollow */}
                   {isFollowing ? (
                     <button
                       onClick={() => onUnfollow(person.id)}
