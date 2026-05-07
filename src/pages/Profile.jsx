@@ -45,31 +45,127 @@ async function compressImage(file, maxPx = 400) {
 
 // ─── Connections modal (followers / following) ────────────────────────────────
 
-function ConnectionsModal({ initialTab, followers, following, followingIds, onClose, onFollow, onUnfollow }) {
-  const [tab, setTab] = useState(initialTab);
+function ConnectionsModal({ open, initialTab, followers, following, followingIds, onClose, onFollow, onUnfollow }) {
+  const [tab, setTab]     = useState(initialTab ?? 'followers');
+  const [animIn, setAnimIn] = useState(false);
+  const sheetRef    = useRef(null);
+  const backdropRef = useRef(null);
+  const dragStartY  = useRef(0);
+  const isDragging  = useRef(false);
+
+  // Sync tab when reopened on a different tab
+  useEffect(() => {
+    if (open && initialTab) setTab(initialTab);
+  }, [open, initialTab]);
+
+  // Body scroll lock + slide-up animation (mirrors AddShirtSheet exactly)
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      if (sheetRef.current) {
+        sheetRef.current.style.transform  = '';
+        sheetRef.current.style.transition = '';
+      }
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setAnimIn(true)));
+      return () => cancelAnimationFrame(id);
+    } else {
+      document.body.style.overflow = '';
+      setAnimIn(false);
+    }
+  }, [open]);
+
+  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+
+  function onDragStart(e) {
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragStartY.current = clientY;
+    isDragging.current = true;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  }
+
+  function onDragMove(e) {
+    if (!isDragging.current) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta   = Math.max(0, clientY - dragStartY.current);
+    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${delta}px)`;
+    if (backdropRef.current) backdropRef.current.style.opacity = String(Math.max(0, 1 - delta / 350));
+  }
+
+  function onDragEnd(e) {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const delta   = Math.max(0, clientY - dragStartY.current);
+
+    if (delta > 120) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transition = 'transform 0.25s ease-in';
+        sheetRef.current.style.transform  = 'translateY(100%)';
+      }
+      setTimeout(onClose, 240);
+    } else {
+      if (sheetRef.current) {
+        sheetRef.current.style.transition = 'transform 0.35s cubic-bezier(0.32,0.72,0,1)';
+        sheetRef.current.style.transform  = 'translateY(0)';
+      }
+      if (backdropRef.current) backdropRef.current.style.opacity = '1';
+      setTimeout(() => {
+        if (sheetRef.current) sheetRef.current.style.transition = '';
+        if (backdropRef.current) backdropRef.current.style.opacity = '';
+      }, 360);
+    }
+  }
+
   const list = tab === 'followers' ? followers : following;
 
   return (
-    <div className="fixed inset-0 z-[60]">
+    <div className={`fixed inset-0 z-[60] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Sheet — anchored above the bottom nav bar (≈80px) + iPhone safe area.
-          Uses absolute positioning so it never fights with flex layout. */}
       <div
-        className="absolute left-0 right-0 bg-gray-900 rounded-t-3xl border-t border-gray-800/60 overflow-hidden"
-        style={{
-          bottom: 'calc(80px + env(safe-area-inset-bottom))',
-          height: '80vh',
-        }}
+        ref={backdropRef}
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${animIn ? 'opacity-100' : 'opacity-0'}`}
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div
+        ref={sheetRef}
+        className={`absolute bottom-0 left-0 right-0 mx-auto max-w-2xl flex flex-col bg-gray-900 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${animIn ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ borderRadius: '24px 24px 0 0', maxHeight: '85dvh', height: '85dvh' }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-2">
+        <div
+          className="flex-shrink-0 flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={onDragStart}
+          onTouchMove={onDragMove}
+          onTouchEnd={onDragEnd}
+          onMouseDown={onDragStart}
+          onMouseMove={isDragging.current ? onDragMove : undefined}
+          onMouseUp={onDragEnd}
+          aria-hidden="true"
+        >
           <div className="w-10 h-1 rounded-full bg-gray-700" />
         </div>
 
-        {/* Tab switcher — acts as the title row */}
-        <div className="flex gap-1 px-4 pb-3 border-b border-gray-800/60">
+        {/* Header — centered title + absolute X button (mirrors AddShirtSheet) */}
+        <div className="flex-shrink-0 relative flex items-center justify-center px-5 py-3.5 border-b border-gray-800/60">
+          <h2 className="text-base font-bold text-gray-100 tracking-tight">
+            {tab === 'followers' ? 'Followers' : 'Following'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="absolute right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-gray-500 hover:text-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Tab switcher */}
+        <div className="flex-shrink-0 flex gap-1 px-4 py-3 border-b border-gray-800/60">
           {[
             { key: 'followers', label: `${followers.length} Followers` },
             { key: 'following', label: `${following.length} Following` },
@@ -77,10 +173,8 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
-                tab === key
-                  ? 'bg-amber-500/15 text-amber-400'
-                  : 'text-gray-600 hover:text-gray-300'
+              className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all ${
+                tab === key ? 'bg-amber-500/15 text-amber-400' : 'text-gray-600 hover:text-gray-300'
               }`}
             >
               {label}
@@ -88,40 +182,29 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
           ))}
         </div>
 
-        {/* Scrollable list — explicit height so items are immediately visible */}
+        {/* Scrollable list */}
         {list.length === 0 ? (
-          <div
-            className="flex items-center justify-center"
-            style={{ height: 'calc(100% - 60px)' }}
-          >
+          <div className="flex-1 flex items-center justify-center">
             <p className="text-gray-600 text-sm">
               {tab === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </p>
           </div>
         ) : (
-          <ul
-            className="divide-y divide-gray-800/30"
-            style={{ height: 'calc(100% - 60px)', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
-          >
+          <ul className="flex-1 overflow-y-auto overscroll-contain divide-y divide-gray-800/30">
             {list.map((person) => {
-              const initials = (person.username ?? 'u').slice(0, 2).toUpperCase();
+              const initials   = (person.username ?? 'u').slice(0, 2).toUpperCase();
               const isFollowing = followingIds.has(person.id);
               return (
                 <li key={person.id} className="flex items-center gap-3 px-5 py-3.5">
-                  {/* Initials / avatar */}
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
                     {person.avatar_url
                       ? <img src={person.avatar_url} alt="" className="w-full h-full object-cover" />
                       : <span className="text-xs font-bold text-amber-400">{initials}</span>
                     }
                   </div>
-
-                  {/* Username */}
                   <span className="flex-1 min-w-0 text-sm font-medium text-gray-300 truncate">
                     {person.username ? `@${person.username}` : 'Unknown collector'}
                   </span>
-
-                  {/* Follow / Unfollow */}
                   {isFollowing ? (
                     <button
                       onClick={() => onUnfollow(person.id)}
@@ -928,17 +1011,16 @@ export default function Profile() {
       )}
 
       {/* ── Connections modal (followers / following) ───────────────────────── */}
-      {connectionsModal && (
-        <ConnectionsModal
-          initialTab={connectionsModal}
-          followers={followers}
-          following={friends}
-          followingIds={new Set(friends.map((f) => f.id))}
-          onClose={() => setConnectionsModal(null)}
-          onFollow={followById}
-          onUnfollow={removeFriend}
-        />
-      )}
+      <ConnectionsModal
+        open={connectionsModal !== null}
+        initialTab={connectionsModal ?? 'followers'}
+        followers={followers}
+        following={friends}
+        followingIds={new Set(friends.map((f) => f.id))}
+        onClose={() => setConnectionsModal(null)}
+        onFollow={followById}
+        onUnfollow={removeFriend}
+      />
     </div>
   );
 }
