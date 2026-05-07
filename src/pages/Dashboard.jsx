@@ -72,32 +72,6 @@ function buildTimeline(history) {
   return points;
 }
 
-/**
- * Fallback: synthesise chart points from shirts' created_at + current_value.
- * Used when price_history is empty or contains only invalid timestamps.
- */
-function buildSyntheticTimeline(shirts) {
-  const valued = shirts.filter(s => s.current_value != null && validTs(s.created_at) !== null);
-  if (!valued.length) return [];
-
-  const sorted = [...valued].sort((a, b) => validTs(a.created_at) - validTs(b.created_at));
-
-  const current = {};
-  const points  = [];
-
-  for (const shirt of sorted) {
-    current[shirt.id] = Number(shirt.current_value);
-    const total = Object.values(current).reduce((a, b) => a + b, 0);
-    points.push({ date: validTs(shirt.created_at), value: total });
-  }
-
-  const last = points[points.length - 1];
-  if (last.date < Date.now() - 60_000) {
-    points.push({ date: Date.now(), value: last.value });
-  }
-
-  return points;
-}
 
 /**
  * Slice the timeline to the selected range, prepending the range-start boundary
@@ -179,22 +153,36 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      const uid = user.id;
+
       const [
         { data: shirts },
-        { data: ph },
         { data: recentData },
         { data: topData },
       ] = await Promise.all([
-        supabase.from('shirts').select('id, purchase_price, current_value, created_at'),
-        supabase.from('price_history').select('shirt_id, price, recorded_at').order('recorded_at', { ascending: true }),
-        supabase.from('shirts').select('id, brand, style, condition, current_value, created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price').order('current_value', { ascending: false }).limit(5),
+        supabase.from('shirts').select('id, purchase_price, current_value, created_at').eq('user_id', uid),
+        supabase.from('shirts').select('id, brand, style, condition, current_value, created_at').eq('user_id', uid).order('created_at', { ascending: false }).limit(5),
+        supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price').eq('user_id', uid).order('current_value', { ascending: false }).limit(5),
       ]);
 
-      setAllShirts(shirts ?? []);
-      setHistory(ph ?? []);
+      const userShirts = shirts ?? [];
+      setAllShirts(userShirts);
       setRecent(recentData ?? []);
       setTopValue(topData ?? []);
+
+      const shirtIds = userShirts.map(s => s.id);
+      if (shirtIds.length > 0) {
+        const { data: ph } = await supabase
+          .from('price_history')
+          .select('shirt_id, price, recorded_at')
+          .in('shirt_id', shirtIds)
+          .order('recorded_at', { ascending: true });
+        setHistory(ph ?? []);
+      }
+
       setLoading(false);
     }
     load();
@@ -205,17 +193,9 @@ export default function Dashboard() {
   const totalCost   = allShirts.reduce((s, r) => s + (r.purchase_price  ?? 0), 0);
   const shirtCount  = allShirts.length;
 
-  // ── Chart data ─────────────────────────────────────────────────────────────
-  const allPoints = useMemo(() => {
-    const fromHistory = buildTimeline(history);
-    if (fromHistory.length > 0) return fromHistory;
-    return buildSyntheticTimeline(allShirts);
-  }, [history, allShirts]);
-  const chartData = useMemo(() => {
-    const data = getVisibleData(allPoints, selectedRange.ms);
-    console.log('[Dashboard] allPoints:', allPoints, '| chartData:', data);
-    return data;
-  }, [allPoints, selectedRange]);
+  // ── Chart data (real price_history only — no synthetic fallback) ───────────
+  const allPoints = useMemo(() => buildTimeline(history), [history]);
+  const chartData = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
 
   // Range-relative gain: compare current portfolio value vs. value at range start
   const rangeStartValue = chartData.length > 0 ? chartData[0].value : 0;
@@ -340,10 +320,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center gap-2">
-              <p className="text-sm text-gray-600">No price history for this period</p>
-              <Link to="/shirts/new" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                Add shirts and log prices to build your chart →
-              </Link>
+              <p className="text-sm text-gray-600">Add shirts to see your collection value over time</p>
             </div>
           )}
         </div>
