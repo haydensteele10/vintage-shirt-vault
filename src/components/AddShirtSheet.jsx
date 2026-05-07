@@ -93,7 +93,7 @@ export default function AddShirtSheet() {
     navigate(`/shirts/${shirtId}`);
   }
 
-  const { prefillData } = useSheet();
+  const { prefillData, openKey } = useSheet();
 
   return (
     /* Outer container — always in DOM, pointer events only when open */
@@ -147,6 +147,7 @@ export default function AddShirtSheet() {
         <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="px-4 py-5">
             <AddEditShirt
+              key={openKey}
               forceNewMode
               initialData={prefillData}
               onComplete={handleSaved}

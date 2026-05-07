@@ -54,6 +54,7 @@ const EMPTY_FORM = {
   condition: 'Excellent', purchase_price: '', purchase_date: '',
   current_value: '', valuation_notes: '', notes: '',
   tour_or_event: '', graphic_keywords: '', sport: '', location: '',
+  tag_brand: '',
 };
 
 const EMPTY_SLOTS = {
@@ -258,6 +259,9 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
   const [aiError, setAiError] = useState(null);
   const [aiFields, setAiFields] = useState([]);
 
+  const [tagAnalyzing, setTagAnalyzing] = useState(false);
+  const [tagError,     setTagError]     = useState(null);
+
   useEffect(() => {
     if (!isEdit) return;
     supabase.from('shirts').select('*').eq('id', id).single().then(({ data }) => {
@@ -279,6 +283,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
         graphic_keywords: data.graphic_keywords ?? '',
         sport: data.sport ?? '',
         location: data.location ?? '',
+        tag_brand: data.tag_brand ?? '',
       });
       const photoMap = {};
       (data.photos ?? []).forEach((p) => { photoMap[p.slot] = p.url; });
@@ -367,13 +372,13 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
       if (result.graphic_keywords) { updates.graphic_keywords = result.graphic_keywords; }
       if (result.sport)            { updates.sport           = result.sport; }
       if (result.location)         { updates.location        = result.location; }
+      if (result.tag_brand)        { updates.tag_brand       = result.tag_brand;        filled.push('tag brand'); }
 
       const noteParts = [
         result.graphic_description,
         result.tour_or_event   ? `Tour/event: ${result.tour_or_event}` : null,
         result.front_text      ? `Front text: ${result.front_text}` : null,
         result.back_text       ? `Back text: ${result.back_text}` : null,
-        result.tag_brand       ? `Tag: ${result.tag_brand}` : null,
         result.stitch_type     ? `Stitching: ${result.stitch_type}` : null,
         result.notes,
       ].filter(Boolean);
@@ -397,6 +402,23 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
       setAiError(err.message || 'Photo analysis failed.');
     } finally {
       setAiAnalyzing(false);
+    }
+  }
+
+  async function analyzeTag() {
+    const file = slots.tags.pendingFile;
+    if (!file) return;
+    setTagAnalyzing(true);
+    setTagError(null);
+    try {
+      const result = await analyzeShirtPhoto(file);
+      if (result.tag_brand) {
+        setForm((f) => ({ ...f, tag_brand: result.tag_brand }));
+      }
+    } catch (err) {
+      setTagError(err.message || 'Tag analysis failed.');
+    } finally {
+      setTagAnalyzing(false);
     }
   }
 
@@ -429,6 +451,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
       graphic_keywords: form.graphic_keywords.trim() || null,
       sport: form.sport.trim() || null,
       location: form.location.trim() || null,
+      tag_brand: form.tag_brand.trim() || null,
     };
 
     const { data: saved, error: saveError } = isEdit
@@ -552,8 +575,13 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
           <SectionHeading>Identification</SectionHeading>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Field label="Brand" required>
-                <input required value={form.brand} onChange={set('brand')} className={inputCls} placeholder="e.g. Hanes, Screen Stars, Fruit of the Loom…" />
+              <Field label="Name" required>
+                <input required value={form.brand} onChange={set('brand')} className={inputCls} placeholder="e.g. Nirvana In Utero Tour, Chicago Bulls 1996, Harley Davidson Eagle" />
+              </Field>
+            </div>
+            <div className="col-span-2">
+              <Field label="Tag Brand">
+                <input value={form.tag_brand} onChange={set('tag_brand')} className={inputCls} placeholder="e.g. Hanes, Screen Stars, Fruit of the Loom" />
               </Field>
             </div>
             <Field label="Style" required>
@@ -581,17 +609,61 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
             <span className="text-xs text-gray-600">JPEG · PNG · HEIC · WebP · max 10 MB</span>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {PHOTO_SLOTS.map(({ key, label }) => (
+            <PhotoSlot
+              slotKey="front"
+              label="Front"
+              currentUrl={!slots.front.removed ? slots.front.url : null}
+              pendingFile={slots.front.pendingFile}
+              onFileSelect={handleFileSelect}
+              onRemove={handleRemove}
+            />
+            <PhotoSlot
+              slotKey="back"
+              label="Back"
+              currentUrl={!slots.back.removed ? slots.back.url : null}
+              pendingFile={slots.back.pendingFile}
+              onFileSelect={handleFileSelect}
+              onRemove={handleRemove}
+            />
+            <div className="space-y-2">
               <PhotoSlot
-                key={key}
-                slotKey={key}
-                label={label}
-                currentUrl={!slots[key].removed ? slots[key].url : null}
-                pendingFile={slots[key].pendingFile}
+                slotKey="tags"
+                label="Tags"
+                currentUrl={!slots.tags.removed ? slots.tags.url : null}
+                pendingFile={slots.tags.pendingFile}
                 onFileSelect={handleFileSelect}
                 onRemove={handleRemove}
               />
-            ))}
+              {slots.tags.pendingFile && (
+                <button
+                  type="button"
+                  onClick={analyzeTag}
+                  disabled={tagAnalyzing}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-semibold text-violet-300 bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/25 hover:border-violet-500/40 rounded-lg transition-all disabled:opacity-40"
+                >
+                  {tagAnalyzing ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Analyzing…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      Analyze Tag
+                    </>
+                  )}
+                </button>
+              )}
+              {tagError && (
+                <p className="text-[10px] text-red-400 text-center leading-tight">{tagError}</p>
+              )}
+            </div>
           </div>
 
           {/* AI photo analysis — only available when a new front photo is staged */}
