@@ -24,11 +24,6 @@ const fmtUsd = (n) =>
     ? `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '—';
 
-const fmtCompact = (v) => {
-  if (v >= 10_000) return `$${(v / 1_000).toFixed(0)}k`;
-  if (v >= 1_000)  return `$${(v / 1_000).toFixed(1)}k`;
-  return `$${v.toFixed(0)}`;
-};
 
 function formatTooltipDate(ts, rangeKey) {
   if (!ts || ts <= 0) return '—';
