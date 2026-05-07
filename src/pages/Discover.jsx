@@ -3,8 +3,7 @@ import { supabase } from '../lib/supabase';
 import { discoverListings } from '../lib/ebay';
 import { useSheet } from '../context/SheetContext';
 import { TagIcon } from '../components/Logo';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import PullIndicator from '../components/PullIndicator';
+import RefreshButton from '../components/RefreshButton';
 
 // ─── Title parser (shared with Search page) ───────────────────────────────────
 
@@ -232,28 +231,30 @@ export default function Discover() {
 
   useEffect(() => { load(); }, [load]);
 
-  const { phase: pullPhase, pullY } = usePullToRefresh(load);
-
   if (loading) return (
     <div className="space-y-8 pb-24">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
-      <div className="px-4 sm:px-6 pt-2">
-        <h1 className="text-xl font-bold text-gray-50">Discover</h1>
-        <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
+      <div className="px-4 sm:px-6 pt-2 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-50">Discover</h1>
+          <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
+        </div>
+        <RefreshButton onRefresh={load} loading={loading} />
       </div>
       <DiscoverSkeleton />
     </div>
   );
 
-  if (error) return <><PullIndicator phase={pullPhase} pullY={pullY} /><ErrorState message={error} onRetry={load} /></>;
-  if (!groups.length) return <><PullIndicator phase={pullPhase} pullY={pullY} /><EmptyCollection /></>;
+  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (!groups.length) return <EmptyCollection />;
 
   return (
     <div className="space-y-8 pb-24">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
-      <div className="px-4 sm:px-6 pt-2">
-        <h1 className="text-xl font-bold text-gray-50">Discover</h1>
-        <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
+      <div className="px-4 sm:px-6 pt-2 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-50">Discover</h1>
+          <p className="text-xs text-gray-500 mt-1">Curated vintage picks based on your collection</p>
+        </div>
+        <RefreshButton onRefresh={load} loading={loading} />
       </div>
 
       {groups.map((group) => (

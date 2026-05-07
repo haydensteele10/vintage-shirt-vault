@@ -4,8 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { TagIcon } from '../components/Logo';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import PullIndicator from '../components/PullIndicator';
+import RefreshButton from '../components/RefreshButton';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -437,8 +436,6 @@ export default function Profile() {
     return () => URL.revokeObjectURL(url);
   }, [avatarFile]);
 
-  const { phase: pullPhase, pullY } = usePullToRefresh(loadAll);
-
   // ── Save profile ────────────────────────────────────────────────────────────
   async function saveProfile() {
     setSaving(true);
@@ -509,13 +506,20 @@ export default function Profile() {
     if (!error) {
       setFriends((prev) => [...prev, person]);
       const myUsername = profile?.username ?? user.email.split('@')[0];
-      supabase.from('notifications').insert({
+      const notifPayload = {
         user_id: person.id,
         type: 'new_follower',
         from_user_id: user.id,
         message: `@${myUsername} started following you`,
         read: false,
-      });
+      };
+      console.log('[followById] inserting notification:', notifPayload);
+      const { error: notifErr } = await supabase.from('notifications').insert(notifPayload);
+      if (notifErr) {
+        console.error('[followById] notification insert FAILED:', notifErr.message, notifErr);
+      } else {
+        console.log('[followById] notification inserted OK');
+      }
     }
   }
 
@@ -537,7 +541,6 @@ export default function Profile() {
 
   return (
     <div className="max-w-lg space-y-5 pb-8">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Profile header ─────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
@@ -545,12 +548,17 @@ export default function Profile() {
         {/* Amber gradient bar */}
         <div className="h-24 relative" style={{ background: 'var(--profile-header-gradient)' }}>
           {!editing && (
-            <button
-              onClick={() => { setDraft({ username: profile?.username ?? '', bio: profile?.bio ?? '' }); setEditing(true); }}
-              className="absolute top-3 right-3 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-200 bg-gray-800/70 hover:bg-gray-700/80 border border-gray-700/50 rounded-lg transition-all backdrop-blur-sm"
-            >
-              Edit Profile
-            </button>
+            <>
+              <button
+                onClick={() => { setDraft({ username: profile?.username ?? '', bio: profile?.bio ?? '' }); setEditing(true); }}
+                className="absolute top-3 right-3 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-200 bg-gray-800/70 hover:bg-gray-700/80 border border-gray-700/50 rounded-lg transition-all backdrop-blur-sm"
+              >
+                Edit Profile
+              </button>
+              <div className="absolute top-3 left-3">
+                <RefreshButton onRefresh={loadAll} loading={loading} />
+              </div>
+            </>
           )}
         </div>
 

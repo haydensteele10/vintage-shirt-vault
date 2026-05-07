@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import PullIndicator from '../components/PullIndicator';
+import RefreshButton from '../components/RefreshButton';
 
 // ─── Filter / sort config ─────────────────────────────────────────────────────
 
@@ -409,8 +408,6 @@ export default function Collection() {
 
   useEffect(() => { load(); }, [load]);
 
-  const { phase: pullPhase, pullY } = usePullToRefresh(load);
-
   // ── Client-side filter + sort ───────────────────────────────────────────────
   const filteredShirts = useMemo(() => {
     let result = [...shirts];
@@ -483,7 +480,6 @@ export default function Collection() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -497,6 +493,7 @@ export default function Collection() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <RefreshButton onRefresh={load} loading={loading} />
           <div className="flex items-center gap-0.5 p-1 border border-gray-800/20 rounded-xl">
             <button
               onClick={() => setView('grid')}

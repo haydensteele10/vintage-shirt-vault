@@ -6,8 +6,7 @@ import {
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import PullIndicator from '../components/PullIndicator';
+import RefreshButton from '../components/RefreshButton';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -193,8 +192,6 @@ export default function Dashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  const { phase: pullPhase, pullY } = usePullToRefresh(load);
-
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalValue  = allShirts.reduce((s, r) => s + (r.current_value   ?? 0), 0);
   const totalCost   = allShirts.reduce((s, r) => s + (r.purchase_price  ?? 0), 0);
@@ -219,16 +216,18 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Hero + Chart card ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
 
         {/* Header */}
-        <div className="px-6 pt-6 pb-4">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-            Total Portfolio Value
-          </p>
+        <div className="px-6 pt-5 pb-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">
+              Total Portfolio Value
+            </p>
+            <RefreshButton onRefresh={load} loading={loading} />
+          </div>
 
           {/* Big value */}
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">

@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { TagIcon } from '../components/Logo';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import PullIndicator from '../components/PullIndicator';
+import RefreshButton from '../components/RefreshButton';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -212,23 +211,31 @@ function FriendSearch({ user, profile, followingIds, onFollow }) {
     } else {
       setLocalFollowing((prev) => new Set([...prev, person.id]));
       onFollow(person);
+      setToast({ type: 'ok', text: `Now following @${person.username}!` });
 
-      // Log activity + notify followed user — fire and forget
+      // Fire and forget — activity log
       supabase.from('activity_feed').insert({
         user_id: user.id,
         type: 'friend_added',
         metadata: { friend_username: person.username },
       });
+
+      // Notification insert — awaited so we can log success/failure
       const myUsername = profile?.username ?? user.email.split('@')[0];
-      supabase.from('notifications').insert({
+      const notifPayload = {
         user_id: person.id,
         type: 'new_follower',
         from_user_id: user.id,
         message: `@${myUsername} started following you`,
         read: false,
-      });
-
-      setToast({ type: 'ok', text: `Now following @${person.username}!` });
+      };
+      console.log('[follow] inserting notification:', notifPayload);
+      const { error: notifErr } = await supabase.from('notifications').insert(notifPayload);
+      if (notifErr) {
+        console.error('[follow] notification insert FAILED:', notifErr.message, notifErr);
+      } else {
+        console.log('[follow] notification inserted OK');
+      }
     }
 
     setTimeout(() => setToast(null), 3000);
@@ -379,8 +386,6 @@ export default function Social() {
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
-  const { phase: pullPhase, pullY } = usePullToRefresh(loadFeed);
-
   function handleFollow(person) {
     setFollowingIds((prev) => new Set([...prev, person.id]));
   }
@@ -400,12 +405,14 @@ export default function Social() {
 
   return (
     <div className="max-w-xl pb-32">
-      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-gray-50 tracking-tight">Social</h1>
-        <p className="text-gray-500 text-sm mt-1">Find collectors and see what's happening.</p>
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-50 tracking-tight">Social</h1>
+          <p className="text-gray-500 text-sm mt-1">Find collectors and see what's happening.</p>
+        </div>
+        <RefreshButton onRefresh={loadFeed} loading={loading} />
       </div>
 
       {/* ── Friend search ───────────────────────────────────────────────────── */}
