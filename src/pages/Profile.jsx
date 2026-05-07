@@ -801,47 +801,6 @@ export default function Profile() {
         )}
       </section>
 
-      {/* ── Friends ────────────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
-        <SectionHead>{`Following · ${friends.length}`}</SectionHead>
-
-        {friends.length === 0 ? (
-          <div className="px-5 py-10 flex flex-col items-center gap-3 text-center">
-            <div className="opacity-40">
-              <TagIcon size={40} />
-            </div>
-            <p className="text-gray-400 font-semibold text-sm">No collectors yet</p>
-            <p className="text-gray-600 text-xs leading-relaxed max-w-xs">
-              Use the Social tab to find and follow other vintage hunters.
-            </p>
-          </div>
-        ) : (
-          <ul>
-            {friends.map((friend) => {
-              const fi = friend.username ? `@${friend.username}` : 'Unknown collector';
-              const fi2 = (friend.username ?? 'u').slice(0, 2).toUpperCase();
-              return (
-                <li key={friend.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-800/30 last:border-0">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                    {friend.avatar_url
-                      ? <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
-                      : <span className="text-xs font-bold text-amber-400">{fi2}</span>
-                    }
-                  </div>
-                  <span className="flex-1 text-sm font-medium text-gray-300">{fi}</span>
-                  <button
-                    onClick={() => removeFriend(friend.id)}
-                    className="text-xs text-gray-600 hover:text-red-400 transition-colors font-medium"
-                  >
-                    Unfollow
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
       {/* ── Resources ──────────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead>Resources</SectionHead>
