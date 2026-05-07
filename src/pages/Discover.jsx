@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { discoverListings } from '../lib/ebay';
 import { useSheet } from '../context/SheetContext';
+import { TagIcon } from '../components/Logo';
 
 // ─── Title parser (shared with Search page) ───────────────────────────────────
 
@@ -174,15 +175,12 @@ function GroupSection({ group }) {
 function EmptyCollection() {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-      <div className="w-14 h-14 rounded-full border border-gray-800/20 flex items-center justify-center mb-4">
-        <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <circle cx="12" cy="12" r="9" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-        </svg>
+      <div className="mb-5 opacity-50">
+        <TagIcon size={52} />
       </div>
-      <p className="text-gray-400 font-medium text-sm mb-1">Nothing to discover yet</p>
-      <p className="text-gray-600 text-xs leading-relaxed">
-        Add some shirts to your collection and we'll find similar pieces on eBay.
+      <p className="text-gray-300 font-semibold text-sm mb-1.5">No finds today — check back soon</p>
+      <p className="text-gray-600 text-xs leading-relaxed max-w-xs">
+        Add shirts to your collection and we'll surface similar vintage pieces from eBay.
       </p>
     </div>
   );

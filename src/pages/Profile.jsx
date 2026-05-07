@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { TagIcon } from '../components/Logo';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -605,8 +606,12 @@ export default function Profile() {
             })}
           </div>
         ) : (
-          <div className="px-5 py-8 text-center">
-            <p className="text-gray-600 text-sm">Pin your favorite shirts to showcase them here.</p>
+          <div className="px-5 py-10 flex flex-col items-center gap-3 text-center">
+            <div className="opacity-40">
+              <TagIcon size={40} />
+            </div>
+            <p className="text-gray-500 text-sm font-medium">Pin your grails here</p>
+            <p className="text-gray-700 text-xs">Showcase up to 5 of your favorite pieces.</p>
           </div>
         )}
       </section>
@@ -642,9 +647,14 @@ export default function Profile() {
         )}
 
         {friends.length === 0 ? (
-          <div className="px-5 py-8 text-center">
-            <p className="text-gray-600 text-sm">Not following anyone yet.</p>
-            <p className="text-gray-700 text-xs mt-1">Search by @username to find collectors.</p>
+          <div className="px-5 py-10 flex flex-col items-center gap-3 text-center">
+            <div className="opacity-40">
+              <TagIcon size={40} />
+            </div>
+            <p className="text-gray-400 font-semibold text-sm">No collectors yet</p>
+            <p className="text-gray-600 text-xs leading-relaxed max-w-xs">
+              Share your profile to connect with other vintage hunters.
+            </p>
           </div>
         ) : (
           <ul>

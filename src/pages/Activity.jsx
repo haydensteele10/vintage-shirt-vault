@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { TagIcon } from '../components/Logo';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -270,16 +271,22 @@ export default function Activity() {
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-gray-800/20 px-6 py-12 text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
-            <svg className="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+        <div className="rounded-2xl border border-gray-800/20 px-6 py-14 text-center flex flex-col items-center gap-4">
+          <div className="opacity-50">
+            <TagIcon size={48} />
           </div>
-          <p className="text-gray-300 font-semibold text-sm">No activity yet</p>
-          <p className="text-gray-600 text-xs leading-relaxed max-w-xs mx-auto">
-            Add shirts to your collection or follow other collectors from the Profile page to see their activity here.
-          </p>
+          <div className="space-y-1.5">
+            <p className="text-gray-300 font-semibold text-sm">Nothing in the feed yet</p>
+            <p className="text-gray-600 text-xs leading-relaxed max-w-xs mx-auto">
+              Add shirts and follow other collectors to see their finds here.
+            </p>
+          </div>
+          <Link
+            to="/profile"
+            className="px-5 py-2 border border-amber-500/30 text-amber-400 text-xs font-semibold rounded-xl hover:bg-amber-500/10 transition-colors"
+          >
+            Find collectors →
+          </Link>
         </div>
       ) : (
         <div className="space-y-5">

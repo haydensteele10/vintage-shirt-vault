@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
+import { TagIcon } from '../components/Logo';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -319,8 +320,12 @@ export default function Dashboard() {
                 </AreaChart>
               </ResponsiveContainer>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center gap-2">
-              <p className="text-sm text-gray-600">Add shirts to see your collection value over time</p>
+            <div className="h-full flex flex-col items-center justify-center gap-3">
+              <div className="opacity-40 animate-pulse">
+                <TagIcon size={40} />
+              </div>
+              <p className="text-sm font-medium text-gray-600">Start tracking your grails</p>
+              <p className="text-xs text-gray-700">Add shirts and log prices to build your chart</p>
             </div>
           )}
         </div>

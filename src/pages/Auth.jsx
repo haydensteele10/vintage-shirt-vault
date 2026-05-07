@@ -7,9 +7,9 @@ export default function Auth() {
   const { session } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const from = location.state?.from?.pathname ?? '/';
+  const from = location.state?.from?.pathname ?? '/dashboard';
 
-  const [mode, setMode] = useState('signin');
+  const [mode, setMode] = useState(location.state?.mode ?? 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

@@ -79,7 +79,7 @@ export default function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-end">
-        <Tab to="/"           end  label="Home"       Icon={HomeIcon} />
+        <Tab to="/dashboard"  end  label="Home"       Icon={HomeIcon} />
         <Tab to="/collection"      label="Collection" Icon={CollectionIcon} />
         <Tab to="/search"          label="Search"     Icon={SearchIcon} />
 

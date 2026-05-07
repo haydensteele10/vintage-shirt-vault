@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
+import { TagIcon } from '../components/Logo';
 
 // ─── Filter / sort config ─────────────────────────────────────────────────────
 
@@ -589,20 +590,31 @@ export default function Collection() {
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
       ) : filteredShirts.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="text-5xl mb-4 opacity-20 select-none">👕</div>
-          <p className="text-gray-400 font-medium">No shirts found</p>
+        <div className="flex flex-col items-center text-center py-24 px-6">
+          <div className="mb-5 opacity-50">
+            <TagIcon size={52} />
+          </div>
           {shirts.length === 0 ? (
-            <Link to="/shirts/new" className="text-amber-400 hover:text-amber-300 text-sm mt-2 inline-block transition-colors">
-              Add your first shirt →
-            </Link>
+            <>
+              <p className="text-gray-200 font-semibold text-base mb-1.5">Your vault is empty — time to hunt</p>
+              <p className="text-gray-600 text-sm mb-6">Every great collection starts with one shirt.</p>
+              <Link
+                to="/shirts/new"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-bold rounded-xl transition-all duration-150"
+              >
+                Add your first shirt
+              </Link>
+            </>
           ) : (
-            <button
-              onClick={clearFilters}
-              className="text-amber-400 hover:text-amber-300 text-sm mt-2 inline-block transition-colors"
-            >
-              Clear filters
-            </button>
+            <>
+              <p className="text-gray-400 font-medium mb-4">No shirts match your filters</p>
+              <button
+                onClick={clearFilters}
+                className="px-5 py-2 border border-amber-500/30 text-amber-400 text-sm font-medium rounded-xl hover:bg-amber-500/10 transition-colors"
+              >
+                Clear filters
+              </button>
+            </>
           )}
         </div>
       ) : view === 'grid' ? (

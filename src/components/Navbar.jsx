@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useSheet } from '../context/SheetContext';
 
 const NAV_LINKS = [
-  { to: '/',           label: 'Dashboard',  end: true  },
+  { to: '/dashboard',  label: 'Dashboard',  end: true  },
   { to: '/collection', label: 'Collection', end: false },
   { to: '/search',     label: 'Search',     end: false },
   { to: '/discover',   label: 'Discover',   end: false },
@@ -43,7 +43,7 @@ export default function Navbar() {
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-15 py-3">
-        <NavLink to="/" className="flex items-center gap-2.5 font-bold text-base tracking-tight group">
+        <NavLink to="/dashboard" className="flex items-center gap-2.5 font-bold text-base tracking-tight group">
           <TagIcon size={26} />
           <span className="text-gray-100 group-hover:text-amber-400 transition-colors">Tag Charting</span>
         </NavLink>

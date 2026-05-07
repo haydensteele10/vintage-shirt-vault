@@ -4,7 +4,9 @@ import { ThemeProvider } from './context/ThemeContext';
 import { SheetProvider } from './context/SheetContext';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
+import SplashScreen from './components/SplashScreen';
 import Auth from './pages/Auth';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Collection from './pages/Collection';
 import ShirtDetail from './pages/ShirtDetail';
@@ -22,11 +24,13 @@ export default function App() {
       <ThemeProvider>
       <SheetProvider>
       <AuthProvider>
+        <SplashScreen />
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Auth />} />
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
-              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="collection" element={<Collection />} />
               <Route path="shirts/new" element={<AddEditShirt />} />
               <Route path="shirts/:id" element={<ShirtDetail />} />
