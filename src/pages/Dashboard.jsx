@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Area, AreaChart, Label, ReferenceDot, ResponsiveContainer, Tooltip,
+  Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
@@ -40,10 +40,12 @@ function formatTooltipDate(ts, rangeKey) {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+const MIN_VALID_TS = new Date('2020-01-01').getTime(); // filter pre-2020 junk dates
+
 function validTs(raw) {
   if (!raw) return null;
   const ms = new Date(raw).getTime();
-  return (!isNaN(ms) && ms > 0) ? ms : null;
+  return (!isNaN(ms) && ms >= MIN_VALID_TS) ? ms : null;
 }
 
 /**
@@ -214,7 +216,11 @@ export default function Dashboard() {
     if (fromHistory.length > 0) return fromHistory;
     return buildSyntheticTimeline(allShirts);
   }, [history, allShirts]);
-  const chartData = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
+  const chartData = useMemo(() => {
+    const data = getVisibleData(allPoints, selectedRange.ms);
+    console.log('[Dashboard] allPoints:', allPoints, '| chartData:', data);
+    return data;
+  }, [allPoints, selectedRange]);
 
   // Range-relative gain: compare current portfolio value vs. value at range start
   const rangeStartValue = chartData.length > 0 ? chartData[0].value : 0;
@@ -306,11 +312,9 @@ export default function Dashboard() {
 
         {/* Chart — edge-to-edge, Apple Stocks style */}
         <div className="h-44 sm:h-56">
-          {hasChart ? (() => {
-            const lastPt = chartData[chartData.length - 1];
-            return (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 28, right: 0, bottom: 0, left: 0 }}>
+          {hasChart ? (
+            <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%"   stopColor="#fbbf24" stopOpacity={0.28} />
@@ -318,6 +322,9 @@ export default function Dashboard() {
                       <stop offset="100%" stopColor="#fbbf24" stopOpacity={0}    />
                     </linearGradient>
                   </defs>
+
+                  <XAxis dataKey="date" hide />
+                  <YAxis hide />
 
                   <Tooltip
                     content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
@@ -334,30 +341,9 @@ export default function Dashboard() {
                     activeDot={{ r: 4, fill: '#fbbf24', stroke: '#0a0a0f', strokeWidth: 2 }}
                     isAnimationActive={false}
                   />
-
-                  {/* Floating value label at the endpoint */}
-                  <ReferenceDot
-                    x={lastPt.date}
-                    y={lastPt.value}
-                    r={4}
-                    fill="#fbbf24"
-                    stroke="#0a0a0f"
-                    strokeWidth={2}
-                  >
-                    <Label
-                      value={privacyMode ? '••••••' : fmtCompact(lastPt.value)}
-                      position="top"
-                      offset={10}
-                      fill="#fbbf24"
-                      fontSize={12}
-                      fontWeight="700"
-                      fontFamily="Inter, system-ui, sans-serif"
-                    />
-                  </ReferenceDot>
                 </AreaChart>
               </ResponsiveContainer>
-            );
-          })() : (
+          ) : (
             <div className="h-full flex flex-col items-center justify-center gap-2">
               <p className="text-sm text-gray-600">No price history for this period</p>
               <Link to="/shirts/new" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
