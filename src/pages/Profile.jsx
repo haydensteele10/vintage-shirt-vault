@@ -51,9 +51,16 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-gray-900 rounded-t-3xl border-t border-gray-800/60 max-h-[75vh] flex flex-col">
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+
+      {/* Sheet — overflow-hidden clips content to rounded corners; safe-area-inset-bottom pads iPhone home bar */}
+      <div
+        className="relative bg-gray-900 rounded-t-3xl border-t border-gray-800/60 flex flex-col overflow-hidden"
+        style={{ maxHeight: '70vh', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-gray-700" />
         </div>
 
@@ -77,39 +84,45 @@ function ConnectionsModal({ initialTab, followers, following, followingIds, onCl
           ))}
         </div>
 
+        {/* List — overscroll-contain stops scroll chaining to the page behind */}
         {list.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center py-12">
+          <div className="py-14 flex items-center justify-center flex-shrink-0">
             <p className="text-gray-600 text-sm">
               {tab === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </p>
           </div>
         ) : (
-          <ul className="flex-1 overflow-y-auto divide-y divide-gray-800/30">
+          <ul className="overflow-y-auto overscroll-contain divide-y divide-gray-800/30">
             {list.map((person) => {
               const initials = (person.username ?? 'u').slice(0, 2).toUpperCase();
               const isFollowing = followingIds.has(person.id);
               return (
-                <li key={person.id} className="flex items-center gap-3 px-5 py-3">
+                <li key={person.id} className="flex items-center gap-3 px-5 py-3.5">
+                  {/* Avatar */}
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
                     {person.avatar_url
                       ? <img src={person.avatar_url} alt="" className="w-full h-full object-cover" />
                       : <span className="text-xs font-bold text-amber-400">{initials}</span>
                     }
                   </div>
-                  <span className="flex-1 text-sm font-medium text-gray-300 truncate">
+
+                  {/* Username — min-w-0 lets truncate work inside flex */}
+                  <span className="flex-1 min-w-0 text-sm font-medium text-gray-300 truncate">
                     {person.username ? `@${person.username}` : 'Unknown collector'}
                   </span>
+
+                  {/* Action button */}
                   {isFollowing ? (
                     <button
                       onClick={() => onUnfollow(person.id)}
-                      className="px-3 py-1.5 text-xs font-semibold text-gray-400 border border-gray-700 rounded-lg hover:text-red-400 hover:border-red-500/30 transition-all flex-shrink-0"
+                      className="ml-2 flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-gray-400 border border-gray-700 rounded-lg hover:text-red-400 hover:border-red-500/30 transition-all"
                     >
                       Unfollow
                     </button>
                   ) : (
                     <button
                       onClick={() => onFollow(person)}
-                      className="px-3 py-1.5 text-xs font-semibold text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition-all flex-shrink-0"
+                      className="ml-2 flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition-all"
                     >
                       Follow
                     </button>
@@ -328,8 +341,10 @@ export default function Profile() {
       profileMap = Object.fromEntries((pts ?? []).map((p) => [p.id, p]));
     }
 
-    setFriends(friendIds.map((id) => profileMap[id]).filter(Boolean));
-    setFollowers(followerIds.map((id) => profileMap[id]).filter(Boolean));
+    // Fall back to a minimal stub so follows are visible even if the followed
+    // user has never set up their profile row yet.
+    setFriends(friendIds.map((id) => profileMap[id] ?? { id, username: null, avatar_url: null }));
+    setFollowers(followerIds.map((id) => profileMap[id] ?? { id, username: null, avatar_url: null }));
 
     setLoading(false);
   }
