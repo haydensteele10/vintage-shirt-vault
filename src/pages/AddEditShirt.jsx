@@ -471,7 +471,9 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
       .map(({ key }) => ({ slot: key, url: slots[key].url }));
 
     const finalPhotos = [...keptPhotos, ...uploadedPhotos];
-    const hasPhotoChanges = uploadedPhotos.length > 0 || PHOTO_SLOTS.some(({ key }) => slots[key].removed);
+    const hasPhotoChanges = uploadedPhotos.length > 0
+      || PHOTO_SLOTS.some(({ key }) => slots[key].removed)
+      || (!isEdit && keptPhotos.length > 0);
 
     if (hasPhotoChanges) {
       const { error: photoError } = await supabase.from('shirts').update({ photos: finalPhotos }).eq('id', shirtId);

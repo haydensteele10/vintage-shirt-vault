@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -385,6 +386,7 @@ export default function Social() {
   }, [user?.id]);
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
+  useRegisterPullRefresh(loadFeed);
 
   function handleFollow(person) {
     setFollowingIds((prev) => new Set([...prev, person.id]));

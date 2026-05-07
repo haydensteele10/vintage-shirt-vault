@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PullToRefreshProvider, useMainRef } from '../context/PullToRefreshContext';
 import Navbar from './Navbar';
 import BottomNav from './BottomNav';
 import Onboarding from './Onboarding';
 import AddShirtSheet from './AddShirtSheet';
 
-export default function Layout() {
+function LayoutContent() {
   const { user } = useAuth();
+  const mainRef = useMainRef();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -28,12 +30,24 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 overflow-x-hidden">
       <Navbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:pb-8 pb-32">
+      <main
+        ref={mainRef}
+        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:pb-8 pb-32"
+        style={{ willChange: 'transform' }}
+      >
         <Outlet />
       </main>
       <BottomNav />
       {showOnboarding && <Onboarding onDone={finishOnboarding} />}
       <AddShirtSheet />
     </div>
+  );
+}
+
+export default function Layout() {
+  return (
+    <PullToRefreshProvider>
+      <LayoutContent />
+    </PullToRefreshProvider>
   );
 }

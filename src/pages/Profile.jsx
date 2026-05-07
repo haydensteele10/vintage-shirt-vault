@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -427,6 +428,7 @@ export default function Profile() {
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadAll(); }, [loadAll]);
+  useRegisterPullRefresh(loadAll);
 
   // Clean up avatar preview blob
   useEffect(() => {

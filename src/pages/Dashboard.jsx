@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -191,6 +192,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useRegisterPullRefresh(load);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalValue  = allShirts.reduce((s, r) => s + (r.current_value   ?? 0), 0);

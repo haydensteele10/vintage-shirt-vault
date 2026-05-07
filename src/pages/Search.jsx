@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { searchEbayActiveListings } from '../lib/ebay';
+import { parseListingTitle } from '../lib/claude';
 import { useSheet } from '../context/SheetContext';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Title parser ─────────────────────────────────────────────────────────────
 
@@ -49,7 +51,21 @@ function parseTitleToFormFields(title, price) {
 
 function SearchResultCard({ listing }) {
   const [imgError, setImgError] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const { openAddShirt } = useSheet();
+
+  async function handleAdd() {
+    setParsing(true);
+    let form;
+    try {
+      form = await parseListingTitle(listing.title, listing.price);
+    } catch {
+      form = parseTitleToFormFields(listing.title, listing.price);
+    } finally {
+      setParsing(false);
+    }
+    openAddShirt({ form, imageUrl: listing.image || null });
+  }
 
   return (
     <div className="rounded-xl border border-gray-800/20 overflow-hidden hover:border-amber-500/30 transition-colors group flex flex-col">
@@ -81,16 +97,26 @@ function SearchResultCard({ listing }) {
       </a>
       <div className="px-3 pb-3">
         <button
-          onClick={() => openAddShirt({
-            form:     parseTitleToFormFields(listing.title, listing.price),
-            imageUrl: listing.image || null,
-          })}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 active:bg-amber-500/30 transition-colors"
+          onClick={handleAdd}
+          disabled={parsing}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 active:bg-amber-500/30 transition-colors disabled:opacity-60"
         >
-          <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+          {parsing ? (
+            <>
+              <svg className="w-3 h-3 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Analyzing…</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -156,6 +182,8 @@ export default function Search() {
   const [error,    setError]    = useState(null);
   const [searched, setSearched] = useState(false);
   const inputRef = useRef(null);
+
+  useRegisterPullRefresh(searched ? () => runSearch(query) : null);
 
   async function runSearch(q) {
     const trimmed = q.trim();

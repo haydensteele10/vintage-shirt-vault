@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Filter / sort config ─────────────────────────────────────────────────────
 
@@ -407,6 +408,7 @@ export default function Collection() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useRegisterPullRefresh(load);
 
   // ── Client-side filter + sort ───────────────────────────────────────────────
   const filteredShirts = useMemo(() => {

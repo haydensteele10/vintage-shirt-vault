@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { discoverListings } from '../lib/ebay';
+import { parseListingTitle } from '../lib/claude';
 import { useSheet } from '../context/SheetContext';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
+import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
 
 // ─── Title parser (shared with Search page) ───────────────────────────────────
 
@@ -85,15 +87,22 @@ function DiscoverSkeleton() {
 
 function ListingCard({ listing }) {
   const [imgError, setImgError] = useState(false);
+  const [parsing, setParsing]   = useState(false);
   const { openAddShirt } = useSheet();
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
-    openAddShirt({
-      form:     parseTitleToFormFields(listing.title, listing.price),
-      imageUrl: listing.image || null,
-    });
+    setParsing(true);
+    let form;
+    try {
+      form = await parseListingTitle(listing.title, listing.price);
+    } catch {
+      form = parseTitleToFormFields(listing.title, listing.price);
+    } finally {
+      setParsing(false);
+    }
+    openAddShirt({ form, imageUrl: listing.image || null });
   }
 
   return (
@@ -129,12 +138,25 @@ function ListingCard({ listing }) {
         </p>
         <button
           onClick={handleAdd}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors"
+          disabled={parsing}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 transition-colors disabled:opacity-60"
         >
-          <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+          {parsing ? (
+            <>
+              <svg className="w-3 h-3 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Analyzing…</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+            </>
+          )}
         </button>
       </div>
     </a>
@@ -230,6 +252,7 @@ export default function Discover() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useRegisterPullRefresh(load);
 
   if (loading) return (
     <div className="space-y-8 pb-24">

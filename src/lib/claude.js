@@ -1,5 +1,14 @@
 import { supabase } from './supabase'
 
+export async function parseListingTitle(title, price) {
+  const { data, error } = await supabase.functions.invoke('parse-listing-title', {
+    body: { title, price },
+  })
+  if (error) throw new Error(error.message)
+  if (data?.error) throw new Error(data.error)
+  return data.result
+}
+
 const UNSUPPORTED_TYPES = ['image/heic', 'image/heif']
 const MAX_DIMENSION = 1568 // Claude's recommended max for vision
 
