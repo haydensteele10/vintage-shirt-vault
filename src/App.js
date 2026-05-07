@@ -15,6 +15,7 @@ import PriceHistory from './pages/PriceHistory';
 import Discover from './pages/Discover';
 import Profile from './pages/Profile';
 import Activity from './pages/Activity';
+import Social from './pages/Social';
 import Search from './pages/Search';
 import TagGuide from './pages/TagGuide';
 
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="search" element={<Search />} />
               <Route path="discover" element={<Discover />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="social" element={<Social />} />
               <Route path="activity" element={<Activity />} />
               <Route path="tag-guide" element={<TagGuide />} />
             </Route>

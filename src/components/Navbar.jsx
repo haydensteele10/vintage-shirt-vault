@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { to: '/collection', label: 'Collection', end: false },
   { to: '/search',     label: 'Search',     end: false },
   { to: '/discover',   label: 'Discover',   end: false },
-  { to: '/activity',   label: 'Activity',   end: false },
+  { to: '/social',     label: 'Social',     end: false },
   { to: '/profile',    label: 'Profile',    end: false },
 ];
 

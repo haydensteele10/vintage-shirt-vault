@@ -358,9 +358,6 @@ export default function Profile() {
   const [saveError, setSaveError] = useState(null);
   const avatarInputRef            = useRef(null);
 
-  // ── Friends ─────────────────────────────────────────────────────────────────
-  const [addFriendInput, setAddFriendInput] = useState('');
-  const [addFriendMsg, setAddFriendMsg]     = useState(null); // {type:'ok'|'err', text}
 
   // ── Showcase picker ─────────────────────────────────────────────────────────
   const [showPicker, setShowPicker] = useState(false);
@@ -500,63 +497,6 @@ export default function Profile() {
   }
 
   // ── Friends ─────────────────────────────────────────────────────────────────
-  async function addFriend(e) {
-    e.preventDefault();
-    const username = addFriendInput.trim().toLowerCase();
-    if (!username) return;
-    setAddFriendMsg(null);
-
-    const { data: target } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('username', username)
-      .maybeSingle();
-
-    if (!target) {
-      setAddFriendMsg({ type: 'err', text: `No user found with username @${username}.` });
-      return;
-    }
-    if (target.id === user.id) {
-      setAddFriendMsg({ type: 'err', text: "You can't follow yourself." });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('friendships')
-      .insert({ user_id: user.id, friend_id: target.id });
-
-    if (error) {
-      const msg = error.code === '23505' ? `Already following @${username}.` : error.message;
-      setAddFriendMsg({ type: 'err', text: msg });
-      return;
-    }
-
-    // Log activity — fire and forget
-    supabase.from('activity_feed').insert({
-      user_id: user.id,
-      type: 'friend_added',
-      metadata: { friend_username: username },
-    });
-
-    setAddFriendMsg({ type: 'ok', text: `Now following @${username}!` });
-    setAddFriendInput('');
-
-    // Refresh friends
-    const { data: fp } = await supabase
-      .from('profiles').select('id, username, avatar_url').eq('id', target.id).maybeSingle();
-    if (fp) setFriends((prev) => [...prev, fp]);
-
-    // Notify the followed user
-    const myUsername = profile?.username ?? user.email.split('@')[0];
-    supabase.from('notifications').insert({
-      user_id: target.id,
-      type: 'new_follower',
-      from_user_id: user.id,
-      message: `@${myUsername} started following you`,
-      read: false,
-    });
-  }
-
   async function removeFriend(friendId) {
     await supabase.from('friendships').delete().eq('user_id', user.id).eq('friend_id', friendId);
     setFriends((prev) => prev.filter((f) => f.id !== friendId));
@@ -864,32 +804,6 @@ export default function Profile() {
       <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
         <SectionHead>{`Following · ${friends.length}`}</SectionHead>
 
-        {/* Add friend form */}
-        <form onSubmit={addFriend} className="flex items-center gap-2 px-4 py-3 border-b border-gray-800/60">
-          <div className="flex-1 flex items-center bg-gray-800 border border-gray-700/80 rounded-xl overflow-hidden">
-            <span className="pl-3 text-gray-600 text-sm">@</span>
-            <input
-              value={addFriendInput}
-              onChange={(e) => { setAddFriendInput(e.target.value); setAddFriendMsg(null); }}
-              placeholder="username"
-              className="flex-1 px-2 py-2 text-sm text-gray-100 bg-transparent focus:outline-none placeholder-gray-600"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!addFriendInput.trim()}
-            className="px-3.5 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium rounded-xl transition-all disabled:opacity-40"
-          >
-            Follow
-          </button>
-        </form>
-
-        {addFriendMsg && (
-          <p className={`px-4 py-2 text-xs ${addFriendMsg.type === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
-            {addFriendMsg.text}
-          </p>
-        )}
-
         {friends.length === 0 ? (
           <div className="px-5 py-10 flex flex-col items-center gap-3 text-center">
             <div className="opacity-40">
@@ -897,7 +811,7 @@ export default function Profile() {
             </div>
             <p className="text-gray-400 font-semibold text-sm">No collectors yet</p>
             <p className="text-gray-600 text-xs leading-relaxed max-w-xs">
-              Share your profile to connect with other vintage hunters.
+              Use the Social tab to find and follow other vintage hunters.
             </p>
           </div>
         ) : (
