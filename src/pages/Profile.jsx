@@ -43,6 +43,87 @@ async function compressImage(file, maxPx = 400) {
   });
 }
 
+// ─── Connections modal (followers / following) ────────────────────────────────
+
+function ConnectionsModal({ initialTab, followers, following, followingIds, onClose, onFollow, onUnfollow }) {
+  const [tab, setTab] = useState(initialTab);
+  const list = tab === 'followers' ? followers : following;
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-gray-900 rounded-t-3xl border-t border-gray-800/60 max-h-[75vh] flex flex-col">
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-700" />
+        </div>
+
+        {/* Tab switcher */}
+        <div className="flex gap-1 px-4 pb-3 border-b border-gray-800/60 flex-shrink-0">
+          {[
+            { key: 'followers', label: `${followers.length} Followers` },
+            { key: 'following', label: `${following.length} Following` },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                tab === key
+                  ? 'bg-amber-500/15 text-amber-400'
+                  : 'text-gray-600 hover:text-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {list.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center py-12">
+            <p className="text-gray-600 text-sm">
+              {tab === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+            </p>
+          </div>
+        ) : (
+          <ul className="flex-1 overflow-y-auto divide-y divide-gray-800/30">
+            {list.map((person) => {
+              const initials = (person.username ?? 'u').slice(0, 2).toUpperCase();
+              const isFollowing = followingIds.has(person.id);
+              return (
+                <li key={person.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    {person.avatar_url
+                      ? <img src={person.avatar_url} alt="" className="w-full h-full object-cover" />
+                      : <span className="text-xs font-bold text-amber-400">{initials}</span>
+                    }
+                  </div>
+                  <span className="flex-1 text-sm font-medium text-gray-300 truncate">
+                    {person.username ? `@${person.username}` : 'Unknown collector'}
+                  </span>
+                  {isFollowing ? (
+                    <button
+                      onClick={() => onUnfollow(person.id)}
+                      className="px-3 py-1.5 text-xs font-semibold text-gray-400 border border-gray-700 rounded-lg hover:text-red-400 hover:border-red-500/30 transition-all flex-shrink-0"
+                    >
+                      Unfollow
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onFollow(person)}
+                      className="px-3 py-1.5 text-xs font-semibold text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition-all flex-shrink-0"
+                    >
+                      Follow
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Spinner() {
@@ -157,8 +238,10 @@ export default function Profile() {
   const [shirts, setShirts]               = useState([]);
   const [showcaseShirts, setShowcaseShirts] = useState([]);
   const [friends, setFriends]             = useState([]);
+  const [followers, setFollowers]         = useState([]);
   const [stats, setStats]                 = useState(null);
   const [loading, setLoading]             = useState(true);
+  const [connectionsModal, setConnectionsModal] = useState(null); // null | 'followers' | 'following'
 
   // ── Edit mode ───────────────────────────────────────────────────────────────
   const [editing, setEditing]     = useState(false);
@@ -198,10 +281,11 @@ export default function Profile() {
   async function loadAll() {
     setLoading(true);
 
-    const [profileRes, shirtsRes, friendRes] = await Promise.all([
+    const [profileRes, shirtsRes, friendRes, followerRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
       supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price, photos, created_at').order('created_at', { ascending: false }),
       supabase.from('friendships').select('friend_id').eq('user_id', user.id),
+      supabase.from('friendships').select('user_id').eq('friend_id', user.id),
     ]);
 
     const prof = profileRes.data ?? null;
@@ -230,17 +314,22 @@ export default function Profile() {
       setShowcaseShirts(ids.map((id) => map[id]).filter(Boolean));
     }
 
-    // Friends — fetch their profiles
-    const friendIds = (friendRes.data ?? []).map((f) => f.friend_id);
-    if (friendIds.length > 0) {
-      const { data: friendProfiles } = await supabase
+    // Fetch profiles for both following and followers in one query
+    const friendIds   = (friendRes.data   ?? []).map((f) => f.friend_id);
+    const followerIds = (followerRes.data ?? []).map((f) => f.user_id);
+    const allIds      = [...new Set([...friendIds, ...followerIds])];
+
+    let profileMap = {};
+    if (allIds.length > 0) {
+      const { data: pts } = await supabase
         .from('profiles')
         .select('id, username, avatar_url')
-        .in('id', friendIds);
-      setFriends(friendProfiles ?? []);
-    } else {
-      setFriends([]);
+        .in('id', allIds);
+      profileMap = Object.fromEntries((pts ?? []).map((p) => [p.id, p]));
     }
+
+    setFriends(friendIds.map((id) => profileMap[id]).filter(Boolean));
+    setFollowers(followerIds.map((id) => profileMap[id]).filter(Boolean));
 
     setLoading(false);
   }
@@ -348,11 +437,38 @@ export default function Profile() {
     const { data: fp } = await supabase
       .from('profiles').select('id, username, avatar_url').eq('id', target.id).maybeSingle();
     if (fp) setFriends((prev) => [...prev, fp]);
+
+    // Notify the followed user
+    const myUsername = profile?.username ?? user.email.split('@')[0];
+    supabase.from('notifications').insert({
+      user_id: target.id,
+      type: 'new_follower',
+      from_user_id: user.id,
+      message: `@${myUsername} started following you`,
+      read: false,
+    });
   }
 
   async function removeFriend(friendId) {
     await supabase.from('friendships').delete().eq('user_id', user.id).eq('friend_id', friendId);
     setFriends((prev) => prev.filter((f) => f.id !== friendId));
+  }
+
+  async function followById(person) {
+    const { error } = await supabase
+      .from('friendships')
+      .insert({ user_id: user.id, friend_id: person.id });
+    if (!error) {
+      setFriends((prev) => [...prev, person]);
+      const myUsername = profile?.username ?? user.email.split('@')[0];
+      supabase.from('notifications').insert({
+        user_id: person.id,
+        type: 'new_follower',
+        from_user_id: user.id,
+        message: `@${myUsername} started following you`,
+        read: false,
+      });
+    }
   }
 
   async function handleSignOut() {
@@ -482,6 +598,26 @@ export default function Profile() {
           ) : (
             <>
               <p className="text-lg font-bold text-gray-50">{displayName}</p>
+
+              {/* Followers / Following counts */}
+              <div className="flex items-center gap-4 mt-2 mb-1">
+                <button
+                  onClick={() => setConnectionsModal('followers')}
+                  className="text-sm hover:opacity-75 transition-opacity text-left"
+                >
+                  <span className="font-bold text-gray-100">{followers.length}</span>{' '}
+                  <span className="text-gray-500">Followers</span>
+                </button>
+                <span className="text-gray-700">·</span>
+                <button
+                  onClick={() => setConnectionsModal('following')}
+                  className="text-sm hover:opacity-75 transition-opacity text-left"
+                >
+                  <span className="font-bold text-gray-100">{friends.length}</span>{' '}
+                  <span className="text-gray-500">Following</span>
+                </button>
+              </div>
+
               {profile?.bio ? (
                 <p className="text-sm text-gray-500 mt-1 leading-relaxed">{profile.bio}</p>
               ) : (
@@ -763,6 +899,19 @@ export default function Profile() {
           current={profile?.showcase_shirt_ids ?? []}
           onSave={saveShowcase}
           onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {/* ── Connections modal (followers / following) ───────────────────────── */}
+      {connectionsModal && (
+        <ConnectionsModal
+          initialTab={connectionsModal}
+          followers={followers}
+          following={friends}
+          followingIds={new Set(friends.map((f) => f.id))}
+          onClose={() => setConnectionsModal(null)}
+          onFollow={followById}
+          onUnfollow={removeFriend}
         />
       )}
     </div>
