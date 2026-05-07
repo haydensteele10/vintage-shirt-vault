@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { searchEbayActiveListings } from '../lib/ebay';
 import { useSheet } from '../context/SheetContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullIndicator from '../components/PullIndicator';
 
 // ─── Title parser ─────────────────────────────────────────────────────────────
 
@@ -154,11 +156,13 @@ export default function Search() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState(null);
   const [searched, setSearched] = useState(false);
-  const inputRef = useRef(null);
+  const inputRef  = useRef(null);
+  const queryRef  = useRef(''); // stable ref for pull-to-refresh closure
 
   async function runSearch(q) {
     const trimmed = q.trim();
     if (!trimmed) return;
+    queryRef.current = trimmed;
     setQuery(trimmed);
     setSearched(true);
     setLoading(true);
@@ -173,6 +177,12 @@ export default function Search() {
       setLoading(false);
     }
   }
+
+  const refresh = useCallback(() => {
+    if (queryRef.current) return runSearch(queryRef.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { phase: pullPhase, pullY } = usePullToRefresh(refresh);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -194,6 +204,7 @@ export default function Search() {
 
   return (
     <div className="pb-32">
+      <PullIndicator phase={pullPhase} pullY={pullY} />
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-50 mb-1">Search eBay</h1>

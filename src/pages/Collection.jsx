@@ -1,8 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullIndicator from '../components/PullIndicator';
 
 // ─── Filter / sort config ─────────────────────────────────────────────────────
 
@@ -364,49 +366,50 @@ export default function Collection() {
     });
   }, [shirts]);
 
-  // Load all shirts once — all filtering/sorting happens client-side
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setLoadError(null);
+  // Load all shirts — all filtering/sorting happens client-side
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
 
-      const { data, error } = await supabase
-        .from('shirts')
-        .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at, price_last_checked')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('shirts')
+      .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at, price_last_checked')
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        // price_last_checked may not exist yet — fall back without it
-        if (error.message?.includes('price_last_checked')) {
-          const { data: fallback, error: fbErr } = await supabase
-            .from('shirts')
-            .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at')
-            .order('created_at', { ascending: false });
+    if (error) {
+      // price_last_checked may not exist yet — fall back without it
+      if (error.message?.includes('price_last_checked')) {
+        const { data: fallback, error: fbErr } = await supabase
+          .from('shirts')
+          .select('id, brand, era, style, size, condition, current_value, purchase_price, photos, created_at')
+          .order('created_at', { ascending: false });
 
-          if (fbErr) { setLoadError(fbErr.message); setLoading(false); return; }
+        if (fbErr) { setLoadError(fbErr.message); setLoading(false); return; }
 
-          const results = fallback ?? [];
-          const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
-          setShirts(results);
-          setGlobalMax(max);
-          setRangeMax(max);
-          setLoading(false);
-          return;
-        }
-        setLoadError(error.message);
+        const results = fallback ?? [];
+        const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
+        setShirts(results);
+        setGlobalMax(max);
+        setRangeMax(max);
         setLoading(false);
         return;
       }
-
-      const results = data ?? [];
-      const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
-      setShirts(results);
-      setGlobalMax(max);
-      setRangeMax(max);
+      setLoadError(error.message);
       setLoading(false);
+      return;
     }
-    load();
+
+    const results = data ?? [];
+    const max = Math.ceil(Math.max(0, ...results.map((s) => Number(s.current_value || 0))));
+    setShirts(results);
+    setGlobalMax(max);
+    setRangeMax(max);
+    setLoading(false);
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const { phase: pullPhase, pullY } = usePullToRefresh(load);
 
   // ── Client-side filter + sort ───────────────────────────────────────────────
   const filteredShirts = useMemo(() => {
@@ -480,6 +483,7 @@ export default function Collection() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      <PullIndicator phase={pullPhase} pullY={pullY} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

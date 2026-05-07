@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -6,6 +6,8 @@ import {
 import { supabase } from '../lib/supabase';
 import ConditionBadge from '../components/ConditionBadge';
 import { TagIcon } from '../components/Logo';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullIndicator from '../components/PullIndicator';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -152,42 +154,46 @@ export default function Dashboard() {
     });
   }
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+  const load = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
 
-      const uid = user.id;
+    const uid = user.id;
+    setLoading(true);
 
-      const [
-        { data: shirts },
-        { data: recentData },
-        { data: topData },
-      ] = await Promise.all([
-        supabase.from('shirts').select('id, purchase_price, current_value, created_at').eq('user_id', uid),
-        supabase.from('shirts').select('id, brand, style, condition, current_value, created_at').eq('user_id', uid).order('created_at', { ascending: false }).limit(5),
-        supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price').eq('user_id', uid).order('current_value', { ascending: false }).limit(5),
-      ]);
+    const [
+      { data: shirts },
+      { data: recentData },
+      { data: topData },
+    ] = await Promise.all([
+      supabase.from('shirts').select('id, purchase_price, current_value, created_at').eq('user_id', uid),
+      supabase.from('shirts').select('id, brand, style, condition, current_value, created_at').eq('user_id', uid).order('created_at', { ascending: false }).limit(5),
+      supabase.from('shirts').select('id, brand, style, condition, current_value, purchase_price').eq('user_id', uid).order('current_value', { ascending: false }).limit(5),
+    ]);
 
-      const userShirts = shirts ?? [];
-      setAllShirts(userShirts);
-      setRecent(recentData ?? []);
-      setTopValue(topData ?? []);
+    const userShirts = shirts ?? [];
+    setAllShirts(userShirts);
+    setRecent(recentData ?? []);
+    setTopValue(topData ?? []);
 
-      const shirtIds = userShirts.map(s => s.id);
-      if (shirtIds.length > 0) {
-        const { data: ph } = await supabase
-          .from('price_history')
-          .select('shirt_id, price, recorded_at')
-          .in('shirt_id', shirtIds)
-          .order('recorded_at', { ascending: true });
-        setHistory(ph ?? []);
-      }
-
-      setLoading(false);
+    const shirtIds = userShirts.map(s => s.id);
+    if (shirtIds.length > 0) {
+      const { data: ph } = await supabase
+        .from('price_history')
+        .select('shirt_id, price, recorded_at')
+        .in('shirt_id', shirtIds)
+        .order('recorded_at', { ascending: true });
+      setHistory(ph ?? []);
+    } else {
+      setHistory([]);
     }
-    load();
+
+    setLoading(false);
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const { phase: pullPhase, pullY } = usePullToRefresh(load);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const totalValue  = allShirts.reduce((s, r) => s + (r.current_value   ?? 0), 0);
@@ -213,6 +219,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
+      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Hero + Chart card ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-gray-800/20 overflow-hidden">

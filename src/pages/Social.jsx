@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { TagIcon } from '../components/Logo';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullIndicator from '../components/PullIndicator';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -377,6 +379,8 @@ export default function Social() {
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
 
+  const { phase: pullPhase, pullY } = usePullToRefresh(loadFeed);
+
   function handleFollow(person) {
     setFollowingIds((prev) => new Set([...prev, person.id]));
   }
@@ -396,6 +400,7 @@ export default function Social() {
 
   return (
     <div className="max-w-xl pb-32">
+      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="mb-5">

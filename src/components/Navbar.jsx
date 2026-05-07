@@ -56,19 +56,22 @@ function timeAgo(dateStr) {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
-function NotifTypeIcon({ type }) {
-  if (type === 'new_follower') {
+// Shows the actor's avatar when available, otherwise a type-specific icon
+function NotifAvatar({ profile, type }) {
+  if (profile) {
+    const initials = (profile.username ?? 'u').slice(0, 2).toUpperCase();
     return (
-      <div className="w-8 h-8 rounded-full bg-amber-500/15 border border-amber-500/25 flex items-center justify-center flex-shrink-0">
-        <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
+      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+        {profile.avatar_url
+          ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+          : <span className="text-xs font-bold text-amber-400">{initials}</span>
+        }
       </div>
     );
   }
   if (type === 'price_change') {
     return (
-      <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
+      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
         <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
         </svg>
@@ -76,7 +79,7 @@ function NotifTypeIcon({ type }) {
     );
   }
   return (
-    <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
+    <div className="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
       <BellIcon />
     </div>
   );
@@ -85,9 +88,30 @@ function NotifTypeIcon({ type }) {
 // ─── Notification bell ────────────────────────────────────────────────────────
 
 function NotificationBell({ user }) {
-  const [notifs, setNotifs] = useState([]);
-  const [open, setOpen]     = useState(false);
-  const ref = useRef(null);
+  const [notifs, setNotifs]         = useState([]);
+  const [profileMap, setProfileMap] = useState({});
+  const [open, setOpen]             = useState(false);
+  const ref          = useRef(null);
+  const fetchedIds   = useRef(new Set()); // prevent duplicate profile fetches
+
+  // Fetch profiles for a list of from_user_id values (deduped)
+  function fetchProfiles(ids) {
+    const toFetch = ids.filter((id) => id && !fetchedIds.current.has(id));
+    if (!toFetch.length) return;
+    toFetch.forEach((id) => fetchedIds.current.add(id));
+    supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', toFetch)
+      .then(({ data }) => {
+        if (data?.length) {
+          setProfileMap((prev) => ({
+            ...prev,
+            ...Object.fromEntries(data.map((p) => [p.id, p])),
+          }));
+        }
+      });
+  }
 
   useEffect(() => {
     if (!user?.id) return;
@@ -98,14 +122,21 @@ function NotificationBell({ user }) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20)
-      .then(({ data }) => setNotifs(data ?? []));
+      .then(({ data }) => {
+        const rows = data ?? [];
+        setNotifs(rows);
+        fetchProfiles([...new Set(rows.map((n) => n.from_user_id).filter(Boolean))]);
+      });
 
     const channel = supabase
       .channel(`notifs_${user.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => setNotifs((prev) => [payload.new, ...prev].slice(0, 20)),
+        (payload) => {
+          setNotifs((prev) => [payload.new, ...prev].slice(0, 20));
+          if (payload.new.from_user_id) fetchProfiles([payload.new.from_user_id]);
+        },
       )
       .subscribe();
 
@@ -173,7 +204,10 @@ function NotificationBell({ user }) {
                     notif.read ? '' : 'bg-amber-500/5'
                   }`}
                 >
-                  <NotifTypeIcon type={notif.type} />
+                  <NotifAvatar
+                    profile={notif.from_user_id ? profileMap[notif.from_user_id] : null}
+                    type={notif.type}
+                  />
                   <div className="flex-1 min-w-0 pt-0.5">
                     <p className={`text-xs leading-snug ${notif.read ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
                       {notif.message}

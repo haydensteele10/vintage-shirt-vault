@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { TagIcon } from '../components/Logo';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullIndicator from '../components/PullIndicator';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -366,22 +368,8 @@ export default function Profile() {
   const privacyMode = localStorage.getItem('privacyMode') === 'true';
 
   // ── Load ───────────────────────────────────────────────────────────────────
-  useEffect(() => {
+  const loadAll = useCallback(async () => {
     if (!user?.id) return;
-    loadAll();
-    // loadAll only needs to re-run when the authenticated user changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-  // Clean up avatar preview blob
-  useEffect(() => {
-    if (!avatarFile) { setAvatarPreview(null); return; }
-    const url = URL.createObjectURL(avatarFile);
-    setAvatarPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [avatarFile]);
-
-  async function loadAll() {
     setLoading(true);
 
     const [profileRes, shirtsRes, friendRes, followerRes] = await Promise.all([
@@ -437,7 +425,19 @@ export default function Profile() {
     setFollowers(followerIds.map((id) => profileMap[id] ?? { id, username: null, avatar_url: null }));
 
     setLoading(false);
-  }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  // Clean up avatar preview blob
+  useEffect(() => {
+    if (!avatarFile) { setAvatarPreview(null); return; }
+    const url = URL.createObjectURL(avatarFile);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatarFile]);
+
+  const { phase: pullPhase, pullY } = usePullToRefresh(loadAll);
 
   // ── Save profile ────────────────────────────────────────────────────────────
   async function saveProfile() {
@@ -537,6 +537,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-lg space-y-5 pb-8">
+      <PullIndicator phase={pullPhase} pullY={pullY} />
 
       {/* ── Profile header ─────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
