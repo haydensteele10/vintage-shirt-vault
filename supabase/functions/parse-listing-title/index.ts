@@ -1,3 +1,5 @@
+import { requireAuth, AuthError, sanitizeInput } from '../_shared/rateLimiter.ts'
+
 const ANTHROPIC_API_KEY = (Deno.env.get('ANTHROPIC_API_KEY') ?? '').trim().replace(/[^\x20-\x7E]/g, '')
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 
@@ -27,8 +29,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
 
   try {
-    const { title, price } = await req.json()
-    if (!title || typeof title !== 'string') throw new Error('title is required')
+    await requireAuth(req)
+
+    const { title: rawTitle, price } = await req.json()
+    const title = sanitizeInput(rawTitle, 500)
+    if (!title) throw new Error('title is required')
 
     console.log('[parse-listing-title] parsing:', title)
 
@@ -85,8 +90,9 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = (err as Error).message
     console.error('[parse-listing-title] error:', msg)
+    const status = (err as any).status ?? 500
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
+      status,
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }

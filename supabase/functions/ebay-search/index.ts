@@ -1,3 +1,5 @@
+import { requireAuth, checkRateLimit, sanitizeInput } from '../_shared/rateLimiter.ts'
+
 const EBAY_CLIENT_ID     = Deno.env.get('EBAY_APP_ID')         ?? ''
 const EBAY_CLIENT_SECRET = Deno.env.get('EBAY_CLIENT_SECRET')  ?? ''
 const ANTHROPIC_API_KEY  = (Deno.env.get('ANTHROPIC_API_KEY')  ?? '').trim().replace(/[^\x20-\x7E]/g, '')
@@ -133,14 +135,22 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
 
   try {
+    const userId = await requireAuth(req)
+    await checkRateLimit(userId, 'ebay-search', 50)
+
     const body = await req.json()
     console.log('[ebay-search] received body:', JSON.stringify(body))
 
-    const {
-      brand, style, era, year, tour_or_event, graphic_keywords, sport, location,
-      query: directQuery,
-      offset = 0,
-    } = body
+    const brand             = sanitizeInput(body.brand,            100)
+    const style             = sanitizeInput(body.style,             20)
+    const era               = sanitizeInput(body.era,               20)
+    const year              = body.year
+    const tour_or_event     = sanitizeInput(body.tour_or_event,    100)
+    const graphic_keywords  = sanitizeInput(body.graphic_keywords, 100)
+    const sport             = sanitizeInput(body.sport,             50)
+    const location          = sanitizeInput(body.location,         100)
+    const directQuery       = sanitizeInput(body.query,            200)
+    const offset            = Math.min(Math.max(0, Number(body.offset) || 0), 500)
 
     const token = await getAccessToken()
 
@@ -251,9 +261,10 @@ Deno.serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    console.error('[ebay-search] error:', (err as Error).message)
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
+    const e = err as Error & { status?: number }
+    console.error('[ebay-search] error:', e.message)
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: e.status ?? 500,
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }

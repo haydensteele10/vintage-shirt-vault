@@ -1,3 +1,5 @@
+import { requireAuth, checkRateLimit, sanitizeInput } from '../_shared/rateLimiter.ts'
+
 const EBAY_CLIENT_ID     = Deno.env.get('EBAY_APP_ID')         ?? ''
 const EBAY_CLIENT_SECRET = Deno.env.get('EBAY_CLIENT_SECRET')  ?? ''
 const ANTHROPIC_API_KEY  = (Deno.env.get('ANTHROPIC_API_KEY')  ?? '').trim().replace(/[^\x20-\x7E]/g, '')
@@ -264,6 +266,9 @@ Deno.serve(async (req) => {
   try {
     console.log('[ebay-discover] invoked, method:', req.method)
 
+    const userId = await requireAuth(req)
+    await checkRateLimit(userId, 'ebay-discover', 30)
+
     let body: { shirts?: unknown } = {}
     try {
       body = await req.json()
@@ -278,6 +283,10 @@ Deno.serve(async (req) => {
       return jsonOk({ groups: [] })
     }
 
+    if (shirts.length > 500) {
+      throw new Error('shirts array exceeds maximum of 500 items')
+    }
+
     console.log('[ebay-discover] collection size:', shirts.length)
 
     const token = await getAccessToken()
@@ -285,11 +294,11 @@ Deno.serve(async (req) => {
 
     // ── Analyse the collection ─────────────────────────────────────────────
     // deno-lint-ignore no-explicit-any
-    const brands = (shirts as any[]).map((s) => s.brand).filter(Boolean) as string[]
+    const brands = (shirts as any[]).map((s) => sanitizeInput(s.brand, 100)).filter(Boolean) as string[]
     // deno-lint-ignore no-explicit-any
-    const eras   = (shirts as any[]).map((s) => s.era).filter(Boolean) as string[]
+    const eras   = (shirts as any[]).map((s) => sanitizeInput(s.era, 100)).filter(Boolean) as string[]
     // deno-lint-ignore no-explicit-any
-    const styles = (shirts as any[]).map((s) => s.style).filter(Boolean) as string[]
+    const styles = (shirts as any[]).map((s) => sanitizeInput(s.style, 100)).filter(Boolean) as string[]
 
     const topBrands = topN(brands, 3)
     const topEra    = topN(eras, 1)[0] ?? null
@@ -367,7 +376,8 @@ Deno.serve(async (req) => {
     return jsonOk({ groups })
   } catch (err) {
     const msg = (err as Error).message ?? 'Unknown error'
+    const status = (err as any).status ?? 500
     console.error('[ebay-discover] unhandled error:', msg)
-    return jsonErr(msg)
+    return jsonErr(msg, status)
   }
 })

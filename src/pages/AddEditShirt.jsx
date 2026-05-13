@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { searchEbaySoldListings } from '../lib/ebay';
 import { analyzeShirtPhoto } from '../lib/claude';
+import { sanitizeShirtForm } from '../lib/sanitize';
 
 // Resize to max 800px on the longest edge and convert to WebP before upload.
 // Falls back to the original file on any canvas/codec failure.
@@ -435,23 +436,25 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
     setError(null);
     setSaving(true);
 
+    const clean = sanitizeShirtForm(form);
+
     const payload = {
-      brand: form.brand.trim(),
-      era: form.era.trim() || null,
-      year: form.year ? parseInt(form.year, 10) : null,
-      style: form.style,
-      size: form.size.trim() || null,
-      condition: form.condition,
-      purchase_price: form.purchase_price !== '' ? parseFloat(form.purchase_price) : null,
-      purchase_date: form.purchase_date || null,
-      current_value: form.current_value !== '' ? parseFloat(form.current_value) : null,
-      valuation_notes: form.valuation_notes.trim() || null,
-      notes: form.notes.trim() || null,
-      tour_or_event: form.tour_or_event.trim() || null,
-      graphic_keywords: form.graphic_keywords.trim() || null,
-      sport: form.sport.trim() || null,
-      location: form.location.trim() || null,
-      tag_brand: form.tag_brand.trim() || null,
+      brand:            clean.brand                              || null,
+      era:              clean.era                               || null,
+      year:             form.year ? parseInt(form.year, 10)     : null,
+      style:            form.style,
+      size:             clean.size                              || null,
+      condition:        form.condition,
+      purchase_price:   form.purchase_price !== '' ? parseFloat(form.purchase_price) : null,
+      purchase_date:    form.purchase_date                      || null,
+      current_value:    form.current_value  !== '' ? parseFloat(form.current_value)  : null,
+      valuation_notes:  clean.valuation_notes                  || null,
+      notes:            clean.notes                             || null,
+      tour_or_event:    clean.tour_or_event                    || null,
+      graphic_keywords: clean.graphic_keywords                 || null,
+      sport:            clean.sport                             || null,
+      location:         clean.location                         || null,
+      tag_brand:        clean.tag_brand                        || null,
     };
 
     const { data: saved, error: saveError } = isEdit

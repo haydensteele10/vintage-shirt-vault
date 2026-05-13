@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { TagIcon } from '../components/Logo';
 import RefreshButton from '../components/RefreshButton';
 import { useRegisterPullRefresh } from '../context/PullToRefreshContext';
+import { sanitizeProfileDraft } from '../lib/sanitize';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -255,7 +256,9 @@ export default function Profile() {
     setSaving(true);
     setSaveError(null);
 
-    if (draft.username && !USERNAME_RE.test(draft.username)) {
+    const clean = sanitizeProfileDraft(draft);
+
+    if (clean.username && !USERNAME_RE.test(clean.username)) {
       setSaveError('Username: 3-20 chars, lowercase letters, numbers, underscores only.');
       setSaving(false);
       return;
@@ -277,8 +280,8 @@ export default function Profile() {
 
     const payload = {
       id: user.id,
-      username: draft.username.trim().toLowerCase() || null,
-      bio: draft.bio.trim() || null,
+      username: clean.username || null,
+      bio:      clean.bio      || null,
       avatar_url: avatarUrl,
       showcase_shirt_ids: profile?.showcase_shirt_ids ?? [],
     };

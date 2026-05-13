@@ -1,3 +1,5 @@
+import { requireAuth, checkRateLimit, AuthError, RateLimitError, sanitizeInput } from '../_shared/rateLimiter.ts'
+
 const ANTHROPIC_API_KEY = (Deno.env.get('ANTHROPIC_API_KEY') ?? '').trim().replace(/[^\x20-\x7E]/g, '')
 console.log('[analyze-shirt] API key length:', ANTHROPIC_API_KEY.length)
 
@@ -81,11 +83,19 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
 
   try {
-    const { imageData, mediaType } = await req.json()
+    const userId = await requireAuth(req)
+    await checkRateLimit(userId, 'analyze-shirt', 20)
+
+    const { imageData, mediaType: rawMediaType } = await req.json()
 
     if (!imageData || typeof imageData !== 'string' || imageData.length === 0) {
       throw new Error('Request body must include a non-empty imageData string (base64)')
     }
+    if (imageData.length > 4_000_000) {
+      throw new Error('Image too large. Maximum size is 3 MB.')
+    }
+
+    const mediaType = sanitizeInput(rawMediaType, 50)
     if (!SUPPORTED_TYPES.includes(mediaType)) {
       throw new Error(`Unsupported media type "${mediaType}". Must be one of: ${SUPPORTED_TYPES.join(', ')}`)
     }
@@ -153,8 +163,9 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     console.error('[analyze-shirt]', (err as Error).message)
+    const status = (err as any).status ?? 500
     return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
+      status,
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }
