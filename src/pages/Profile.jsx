@@ -310,36 +310,6 @@ export default function Profile() {
     setShowcaseShirts(ids.map((id) => map[id]).filter(Boolean));
   }
 
-  // ── Friends ─────────────────────────────────────────────────────────────────
-  async function removeFriend(friendId) {
-    await supabase.from('friendships').delete().eq('user_id', user.id).eq('friend_id', friendId);
-    setFriends((prev) => prev.filter((f) => f.id !== friendId));
-  }
-
-  async function followById(person) {
-    const { error } = await supabase
-      .from('friendships')
-      .insert({ user_id: user.id, friend_id: person.id });
-    if (!error) {
-      setFriends((prev) => [...prev, person]);
-      const myUsername = profile?.username ?? user.email.split('@')[0];
-      const notifPayload = {
-        user_id: person.id,
-        type: 'new_follower',
-        from_user_id: user.id,
-        message: `@${myUsername} started following you`,
-        read: false,
-      };
-      console.log('[followById] inserting notification:', notifPayload);
-      const { error: notifErr } = await supabase.from('notifications').insert(notifPayload);
-      if (notifErr) {
-        console.error('[followById] notification insert FAILED:', notifErr.message, notifErr);
-      } else {
-        console.log('[followById] notification inserted OK');
-      }
-    }
-  }
-
   async function handleSignOut() {
     await signOut();
     navigate('/login', { replace: true });

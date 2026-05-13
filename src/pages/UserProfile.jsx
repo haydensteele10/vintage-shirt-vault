@@ -29,7 +29,6 @@ function BackButton() {
 export default function UserProfile() {
   const { username } = useParams();
   const { user }     = useAuth();
-  const navigate     = useNavigate();
 
   const [profile,        setProfile]        = useState(null);
   const [showcaseShirts, setShowcaseShirts] = useState([]);

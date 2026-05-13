@@ -8,7 +8,8 @@
       "Bash(npx react-scripts *)",
       "Bash(npm run *)",
       "Bash(node --input-type=module)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(findstr /i \"warning\\\\|error\\\\|unused\\\\|defined\")"
     ]
   }
 }
