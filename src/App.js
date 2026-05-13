@@ -18,6 +18,9 @@ import Activity from './pages/Activity';
 import Social from './pages/Social';
 import Search from './pages/Search';
 import TagGuide from './pages/TagGuide';
+import Followers from './pages/Followers';
+import UserProfile from './pages/UserProfile';
+import SetupUsername from './pages/SetupUsername';
 
 export default function App() {
   return (
@@ -30,6 +33,9 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Auth />} />
           <Route element={<RequireAuth />}>
+            {/* Username setup — full-screen, no app chrome */}
+            <Route path="setup-username" element={<SetupUsername />} />
+
             <Route element={<Layout />}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="collection" element={<Collection />} />
@@ -43,6 +49,9 @@ export default function App() {
               <Route path="social" element={<Social />} />
               <Route path="activity" element={<Activity />} />
               <Route path="tag-guide" element={<TagGuide />} />
+              <Route path="followers" element={<Followers initialTab="followers" />} />
+              <Route path="following" element={<Followers initialTab="following" />} />
+              <Route path="user/:username" element={<UserProfile />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

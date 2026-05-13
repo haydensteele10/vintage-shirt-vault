@@ -7,7 +7,8 @@
       "Bash(ConvertTo-String -Width 120)",
       "Bash(npx react-scripts *)",
       "Bash(npm run *)",
-      "Bash(node --input-type=module)"
+      "Bash(node --input-type=module)",
+      "Bash(node *)"
     ]
   }
 }

@@ -59,8 +59,11 @@ function SearchResultCard({ listing }) {
     let form;
     try {
       form = await parseListingTitle(listing.title, listing.price);
-    } catch {
+      console.log('[Search] Claude parsed listing:', form);
+    } catch (err) {
+      console.warn('[Search] Claude parse failed, using fallback:', err.message);
       form = parseTitleToFormFields(listing.title, listing.price);
+      console.log('[Search] fallback parsed listing:', form);
     } finally {
       setParsing(false);
     }
