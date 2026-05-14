@@ -33,6 +33,8 @@
 
 :root {
   --profile-header-gradient: linear-gradient(to bottom right, rgba(37,99,235,0.25), #0F172A 50%, #0F172A);
+  --foreground: #F8FAFC;
+  --background: #0F172A;
 }
 
 /* ─── Light Mode ──────────────────────────────────────────────────────────────
@@ -43,6 +45,8 @@
 html.light-mode {
   color-scheme: light;
   --profile-header-gradient: linear-gradient(to bottom right, rgba(37,99,235,0.08), #F8FAFC);
+  --foreground: #1E293B;
+  --background: #F8FAFC;
 }
 
 html.light-mode body {

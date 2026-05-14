@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { GlassButton } from './ui/apple-tahoe-liquid-glass-button';
 import { TagIcon } from './Logo';
 import { useTheme } from '../context/ThemeContext';
 import { useSheet } from '../context/SheetContext';
@@ -260,12 +261,9 @@ export default function Navbar() {
             ))}
 
             {/* Add Shirt */}
-            <button
-              onClick={openAddShirt}
-              className={`${linkCls} ml-2 border-2 border-gray-700 hover:border-orange-500 hover:text-orange-500 text-gray-500 transition-all duration-150`}
-            >
+            <GlassButton size="sm" onClick={openAddShirt} className="ml-2">
               + Add Shirt
-            </button>
+            </GlassButton>
 
             {/* Theme toggle */}
             <button

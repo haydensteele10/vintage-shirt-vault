@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { GlassButton } from '../components/ui/apple-tahoe-liquid-glass-button';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { searchEbaySoldListings } from '../lib/ebay';
@@ -672,11 +673,12 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
           {/* AI photo analysis — only available when a new front photo is staged */}
           {slots.front.pendingFile && (
             <div className="mt-4 space-y-3">
-              <button
+              <GlassButton
                 type="button"
                 onClick={analyzePhoto}
                 disabled={aiAnalyzing || ebaySearching}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 hover:text-violet-200 text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+                className="w-full"
+                glassColor="oklch(from #7c3aed l c h / 15%)"
               >
                 {aiAnalyzing ? (
                   <>
@@ -695,7 +697,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
                     Analyze Photo with AI
                   </>
                 )}
-              </button>
+              </GlassButton>
 
               {aiError && (
                 <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
@@ -754,11 +756,11 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
               <input type="number" step="0.01" value={form.current_value} onChange={set('current_value')} className={inputCls} placeholder="0.00" min="0" />
             </Field>
             <div className="flex items-end">
-              <button
+              <GlassButton
                 type="button"
                 onClick={() => searchEbay()}
                 disabled={!form.brand || ebaySearching}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white text-sm font-medium rounded-xl transition-all disabled:opacity-40"
+                className="w-full"
               >
                 {ebaySearching ? (
                   <>
@@ -776,7 +778,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
                     Search eBay
                   </>
                 )}
-              </button>
+              </GlassButton>
             </div>
           </div>
 
@@ -903,13 +905,13 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
         )}
 
         <div className="flex gap-3 pb-4">
-          <button
+          <GlassButton
             type="submit"
             disabled={isBusy}
-            className="px-7 py-2.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-condensed font-bold text-sm uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
+            glassColor="oklch(from #f97316 l c h / 20%)"
           >
             {buttonLabel}
-          </button>
+          </GlassButton>
           <button
             type="button"
             onClick={() => {

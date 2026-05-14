@@ -1,9 +1,11 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TagIcon } from '../components/Logo';
+import { GlassButton } from '../components/ui/apple-tahoe-liquid-glass-button';
 
 export default function Landing() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   if (session) return <Navigate to="/dashboard" replace />;
 
   return (
@@ -44,19 +46,18 @@ export default function Landing() {
             Catalog your vintage tees, pull live eBay comps, and watch your portfolio grow.
           </p>
           <div className="flex flex-col sm:flex-row items-start gap-3 ml-1">
-            <Link
-              to="/login"
-              state={{ mode: 'signup' }}
-              className="px-8 py-4 bg-orange-500 border-2 border-orange-500 text-white font-condensed font-bold text-sm uppercase tracking-[0.15em] hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 cursor-pointer"
+            <GlassButton
+              size="lg"
+              onClick={() => navigate('/login', { state: { mode: 'signup' } })}
             >
               Start tracking free
-            </Link>
-            <Link
-              to="/login"
-              className="px-8 py-4 border-2 border-gray-700 text-gray-400 font-condensed font-semibold text-sm uppercase tracking-[0.15em] hover:border-gray-400 hover:text-gray-50 transition-all duration-150 cursor-pointer"
+            </GlassButton>
+            <GlassButton
+              size="lg"
+              onClick={() => navigate('/login')}
             >
               Sign in
-            </Link>
+            </GlassButton>
           </div>
         </div>
 

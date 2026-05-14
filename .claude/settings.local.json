@@ -15,7 +15,10 @@
       "PowerShell(ls -Path \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\" | ft Name, @{n='IsDir';e={$_.PSIsContainer}})",
       "Bash(grep -E \"\\\\.jsx?$\")",
       "Bash(python *)",
-      "Bash(npm start *)"
+      "Bash(npm start *)",
+      "Bash(cd /d C:\\\\Users\\\\hayde\\\\vintage-shirt-vault)",
+      "Bash(npm install *)",
+      "PowerShell(npm install *)"
     ]
   }
 }
