@@ -13,12 +13,16 @@
     font-family: 'DM Sans', system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', Georgia, serif;
+  h1, h2 {
+    font-family: 'Abril Fatface', Georgia, serif;
+  }
+
+  h3, h4, h5, h6 {
+    font-family: 'Merriweather', Georgia, serif;
   }
 
   ::selection {
-    @apply bg-amber-500/30 text-amber-200;
+    @apply bg-amber-500/20 text-amber-200;
   }
 
   ::-webkit-scrollbar       { width: 4px; height: 4px; }
@@ -28,121 +32,121 @@
 }
 
 :root {
-  --profile-header-gradient: linear-gradient(to bottom right, rgba(196,84,26,0.3), #1A1209 50%, #1A1209);
+  --profile-header-gradient: linear-gradient(to bottom right, rgba(37,99,235,0.25), #0F172A 50%, #0F172A);
 }
 
 /* ─── Light Mode ──────────────────────────────────────────────────────────────
-   Warm cream palette — replaces old blue/navy light theme.
+   Slate light palette.
    Applied when html has the .light-mode class.
    ─────────────────────────────────────────────────────────────────────────── */
 
 html.light-mode {
   color-scheme: light;
-  --profile-header-gradient: linear-gradient(to bottom right, rgba(196,84,26,0.08), #F5F0E8);
+  --profile-header-gradient: linear-gradient(to bottom right, rgba(37,99,235,0.08), #F8FAFC);
 }
 
 html.light-mode body {
-  background-color: #F5F0E8 !important;
-  color: #1A1209 !important;
+  background-color: #F8FAFC !important;
+  color: #1E293B !important;
 }
 
-html.light-mode ::-webkit-scrollbar-track { background-color: #EDE8DC; }
-html.light-mode ::-webkit-scrollbar-thumb { background-color: #C4B49A; }
-html.light-mode ::-webkit-scrollbar-thumb:hover { background-color: #A89070; }
+html.light-mode ::-webkit-scrollbar-track { background-color: #F1F5F9; }
+html.light-mode ::-webkit-scrollbar-thumb { background-color: #CBD5E1; }
+html.light-mode ::-webkit-scrollbar-thumb:hover { background-color: #94A3B8; }
 
 /* ── Page / structural backgrounds ───────────────────────────────────────── */
-html.light-mode .bg-gray-950          { background-color: #F5F0E8 !important; }
-html.light-mode .bg-gray-950\/90      { background-color: rgba(245,240,232,0.94) !important; }
-html.light-mode .bg-gray-950\/95      { background-color: rgba(245,240,232,0.97) !important; }
-html.light-mode .bg-gray-950\/98      { background-color: rgba(245,240,232,0.99) !important; }
-html.light-mode .bg-gray-950\/80      { background-color: rgba(26,18,9,0.45) !important; }
-html.light-mode .bg-gray-950\/70      { background-color: rgba(26,18,9,0.35) !important; }
+html.light-mode .bg-gray-950          { background-color: #F8FAFC !important; }
+html.light-mode .bg-gray-950\/90      { background-color: rgba(248,250,252,0.94) !important; }
+html.light-mode .bg-gray-950\/95      { background-color: rgba(248,250,252,0.97) !important; }
+html.light-mode .bg-gray-950\/98      { background-color: rgba(248,250,252,0.99) !important; }
+html.light-mode .bg-gray-950\/80      { background-color: rgba(11,17,32,0.45) !important; }
+html.light-mode .bg-gray-950\/70      { background-color: rgba(11,17,32,0.35) !important; }
 
 /* ── Card / surface backgrounds ──────────────────────────────────────────── */
-html.light-mode .bg-gray-900          { background-color: #EDE8DC !important; }
-html.light-mode .bg-gray-900\/50      { background-color: rgba(237,232,220,0.6) !important; }
-html.light-mode .bg-gray-900\/70      { background-color: rgba(237,232,220,0.8) !important; }
-html.light-mode .bg-gray-900\/80      { background-color: rgba(237,232,220,0.88) !important; }
+html.light-mode .bg-gray-900          { background-color: #F1F5F9 !important; }
+html.light-mode .bg-gray-900\/50      { background-color: rgba(241,245,249,0.6) !important; }
+html.light-mode .bg-gray-900\/70      { background-color: rgba(241,245,249,0.8) !important; }
+html.light-mode .bg-gray-900\/80      { background-color: rgba(241,245,249,0.88) !important; }
 
 /* ── Input / secondary backgrounds ───────────────────────────────────────── */
-html.light-mode .bg-gray-800          { background-color: #E0D8C8 !important; }
-html.light-mode .bg-gray-800\/80      { background-color: rgba(224,216,200,0.88) !important; }
-html.light-mode .bg-gray-800\/70      { background-color: rgba(224,216,200,0.80) !important; }
-html.light-mode .bg-gray-800\/60      { background-color: rgba(224,216,200,0.72) !important; }
-html.light-mode .bg-gray-800\/50      { background-color: rgba(224,216,200,0.60) !important; }
-html.light-mode .bg-gray-800\/40      { background-color: rgba(224,216,200,0.50) !important; }
-html.light-mode .bg-gray-800\/30      { background-color: rgba(224,216,200,0.40) !important; }
-html.light-mode .bg-gray-800\/20      { background-color: rgba(224,216,200,0.30) !important; }
+html.light-mode .bg-gray-800          { background-color: #E2E8F0 !important; }
+html.light-mode .bg-gray-800\/80      { background-color: rgba(226,232,240,0.88) !important; }
+html.light-mode .bg-gray-800\/70      { background-color: rgba(226,232,240,0.80) !important; }
+html.light-mode .bg-gray-800\/60      { background-color: rgba(226,232,240,0.72) !important; }
+html.light-mode .bg-gray-800\/50      { background-color: rgba(226,232,240,0.60) !important; }
+html.light-mode .bg-gray-800\/40      { background-color: rgba(226,232,240,0.50) !important; }
+html.light-mode .bg-gray-800\/30      { background-color: rgba(226,232,240,0.40) !important; }
+html.light-mode .bg-gray-800\/20      { background-color: rgba(226,232,240,0.30) !important; }
 
 /* ── Button / tertiary backgrounds ───────────────────────────────────────── */
-html.light-mode .bg-gray-700          { background-color: #C8BEA8 !important; }
-html.light-mode .bg-gray-700\/80      { background-color: rgba(200,190,168,0.88) !important; }
-html.light-mode .bg-gray-600          { background-color: #B0A490 !important; }
+html.light-mode .bg-gray-700          { background-color: #CBD5E1 !important; }
+html.light-mode .bg-gray-700\/80      { background-color: rgba(203,213,225,0.88) !important; }
+html.light-mode .bg-gray-600          { background-color: #94A3B8 !important; }
 
 /* ── Hover background states ─────────────────────────────────────────────── */
-html.light-mode .hover\:bg-gray-800\/70:hover  { background-color: rgba(208,200,184,0.90) !important; }
-html.light-mode .hover\:bg-gray-800\/60:hover  { background-color: rgba(208,200,184,0.80) !important; }
-html.light-mode .hover\:bg-gray-800\/30:hover  { background-color: rgba(208,200,184,0.50) !important; }
-html.light-mode .hover\:bg-gray-800\/20:hover  { background-color: rgba(208,200,184,0.40) !important; }
-html.light-mode .hover\:bg-gray-800:hover      { background-color: #D4CCC0 !important; }
-html.light-mode .hover\:bg-gray-700\/80:hover  { background-color: rgba(192,184,168,0.90) !important; }
-html.light-mode .hover\:bg-gray-700:hover      { background-color: #C0B8A8 !important; }
-html.light-mode .hover\:bg-gray-600:hover      { background-color: #B0A898 !important; }
-html.light-mode .active\:bg-gray-800:active    { background-color: #C8C0B0 !important; }
+html.light-mode .hover\:bg-gray-800\/70:hover  { background-color: rgba(210,218,228,0.90) !important; }
+html.light-mode .hover\:bg-gray-800\/60:hover  { background-color: rgba(210,218,228,0.80) !important; }
+html.light-mode .hover\:bg-gray-800\/30:hover  { background-color: rgba(210,218,228,0.50) !important; }
+html.light-mode .hover\:bg-gray-800\/20:hover  { background-color: rgba(210,218,228,0.40) !important; }
+html.light-mode .hover\:bg-gray-800:hover      { background-color: #D4DCE8 !important; }
+html.light-mode .hover\:bg-gray-700\/80:hover  { background-color: rgba(192,202,216,0.90) !important; }
+html.light-mode .hover\:bg-gray-700:hover      { background-color: #C0CAD8 !important; }
+html.light-mode .hover\:bg-gray-600:hover      { background-color: #94A3B8 !important; }
+html.light-mode .active\:bg-gray-800:active    { background-color: #C8D4E0 !important; }
 
 /* ── Border colors ───────────────────────────────────────────────────────── */
-html.light-mode .border-gray-800          { border-color: #C4BAAA !important; }
-html.light-mode .border-gray-800\/60      { border-color: rgba(196,186,170,0.75) !important; }
-html.light-mode .border-gray-800\/40      { border-color: rgba(196,186,170,0.55) !important; }
-html.light-mode .border-gray-800\/30      { border-color: rgba(196,186,170,0.45) !important; }
-html.light-mode .border-gray-800\/20      { border-color: rgba(196,186,170,0.30) !important; }
-html.light-mode .border-gray-700          { border-color: #B0A490 !important; }
-html.light-mode .border-gray-700\/80      { border-color: rgba(176,164,144,0.85) !important; }
-html.light-mode .border-gray-700\/60      { border-color: rgba(176,164,144,0.70) !important; }
-html.light-mode .border-gray-700\/50      { border-color: rgba(176,164,144,0.60) !important; }
-html.light-mode .border-gray-700\/40      { border-color: rgba(176,164,144,0.50) !important; }
-html.light-mode .border-gray-700\/30      { border-color: rgba(176,164,144,0.40) !important; }
-html.light-mode .border-gray-600          { border-color: #9C9080 !important; }
-html.light-mode .border-dashed.border-gray-700\/60 { border-color: rgba(176,164,144,0.55) !important; }
-html.light-mode .hover\:border-gray-600:hover { border-color: #9C9080 !important; }
-html.light-mode .hover\:border-gray-500:hover { border-color: #8A7C68 !important; }
-html.light-mode .hover\:border-gray-400:hover { border-color: #6B5840 !important; }
+html.light-mode .border-gray-800          { border-color: #CBD5E1 !important; }
+html.light-mode .border-gray-800\/60      { border-color: rgba(203,213,225,0.75) !important; }
+html.light-mode .border-gray-800\/40      { border-color: rgba(203,213,225,0.55) !important; }
+html.light-mode .border-gray-800\/30      { border-color: rgba(203,213,225,0.45) !important; }
+html.light-mode .border-gray-800\/20      { border-color: rgba(203,213,225,0.30) !important; }
+html.light-mode .border-gray-700          { border-color: #94A3B8 !important; }
+html.light-mode .border-gray-700\/80      { border-color: rgba(148,163,184,0.85) !important; }
+html.light-mode .border-gray-700\/60      { border-color: rgba(148,163,184,0.70) !important; }
+html.light-mode .border-gray-700\/50      { border-color: rgba(148,163,184,0.60) !important; }
+html.light-mode .border-gray-700\/40      { border-color: rgba(148,163,184,0.50) !important; }
+html.light-mode .border-gray-700\/30      { border-color: rgba(148,163,184,0.40) !important; }
+html.light-mode .border-gray-600          { border-color: #64748B !important; }
+html.light-mode .border-dashed.border-gray-700\/60 { border-color: rgba(148,163,184,0.55) !important; }
+html.light-mode .hover\:border-gray-600:hover { border-color: #64748B !important; }
+html.light-mode .hover\:border-gray-500:hover { border-color: #475569 !important; }
+html.light-mode .hover\:border-gray-400:hover { border-color: #334155 !important; }
 
 /* ── Text colors ─────────────────────────────────────────────────────────── */
-html.light-mode .text-gray-50   { color: #1A1209 !important; }
-html.light-mode .text-gray-100  { color: #2A1F10 !important; }
-html.light-mode .text-gray-200  { color: #3A2E1C !important; }
-html.light-mode .text-gray-300  { color: #504030 !important; }
-html.light-mode .text-gray-400  { color: #6B5840 !important; }
-html.light-mode .text-gray-500  { color: #8A7458 !important; }
-html.light-mode .text-gray-600  { color: #A89070 !important; }
-html.light-mode .text-gray-700  { color: #C4B49A !important; }
-html.light-mode .text-gray-800  { color: #D8CEBC !important; }
-html.light-mode .hover\:text-gray-50:hover  { color: #1A1209 !important; }
-html.light-mode .hover\:text-gray-100:hover { color: #1A1209 !important; }
-html.light-mode .hover\:text-gray-200:hover { color: #2A1F10 !important; }
-html.light-mode .hover\:text-gray-300:hover { color: #3A2E1C !important; }
-html.light-mode .hover\:text-gray-400:hover { color: #504030 !important; }
+html.light-mode .text-gray-50   { color: #1E293B !important; }
+html.light-mode .text-gray-100  { color: #1E293B !important; }
+html.light-mode .text-gray-200  { color: #334155 !important; }
+html.light-mode .text-gray-300  { color: #475569 !important; }
+html.light-mode .text-gray-400  { color: #64748B !important; }
+html.light-mode .text-gray-500  { color: #94A3B8 !important; }
+html.light-mode .text-gray-600  { color: #94A3B8 !important; }
+html.light-mode .text-gray-700  { color: #CBD5E1 !important; }
+html.light-mode .text-gray-800  { color: #E2E8F0 !important; }
+html.light-mode .hover\:text-gray-50:hover  { color: #1E293B !important; }
+html.light-mode .hover\:text-gray-100:hover { color: #1E293B !important; }
+html.light-mode .hover\:text-gray-200:hover { color: #334155 !important; }
+html.light-mode .hover\:text-gray-300:hover { color: #475569 !important; }
+html.light-mode .hover\:text-gray-400:hover { color: #475569 !important; }
 
 /* ── Placeholder text ────────────────────────────────────────────────────── */
-html.light-mode .placeholder-gray-600::placeholder { color: #A89070 !important; }
-html.light-mode .placeholder-gray-700::placeholder { color: #C4B49A !important; }
+html.light-mode .placeholder-gray-600::placeholder { color: #94A3B8 !important; }
+html.light-mode .placeholder-gray-700::placeholder { color: #CBD5E1 !important; }
 
-/* ── Amber / rust accent (slightly darkened for contrast on cream) ─────────── */
-html.light-mode .text-amber-500  { color: #A84214 !important; }
-html.light-mode .text-amber-400  { color: #B84010 !important; }
-html.light-mode .text-amber-300  { color: #C4501A !important; }
-html.light-mode .border-t-amber-400 { border-top-color: #C4541A !important; }
-html.light-mode .hover\:text-amber-500:hover { color: #A84214 !important; }
-html.light-mode .hover\:text-amber-400:hover { color: #A84214 !important; }
+/* ── Blue / amber accent (darkened for contrast on light bg) ──────────────── */
+html.light-mode .text-amber-500  { color: #1D4ED8 !important; }
+html.light-mode .text-amber-400  { color: #2563EB !important; }
+html.light-mode .text-amber-300  { color: #3B82F6 !important; }
+html.light-mode .border-t-amber-400 { border-top-color: #2563EB !important; }
+html.light-mode .hover\:text-amber-500:hover { color: #1D4ED8 !important; }
+html.light-mode .hover\:text-amber-400:hover { color: #1D4ED8 !important; }
 
 /* ── Ring colors ─────────────────────────────────────────────────────────── */
-html.light-mode .ring-gray-900   { --tw-ring-color: rgba(237,232,220,0.9); }
-html.light-mode .ring-gray-800   { --tw-ring-color: rgba(224,216,200,0.8); }
-html.light-mode .ring-gray-950   { --tw-ring-color: rgba(245,240,232,0.95); }
+html.light-mode .ring-gray-900   { --tw-ring-color: rgba(241,245,249,0.9); }
+html.light-mode .ring-gray-800   { --tw-ring-color: rgba(226,232,240,0.8); }
+html.light-mode .ring-gray-950   { --tw-ring-color: rgba(248,250,252,0.95); }
 
 /* ── Gradient overrides ──────────────────────────────────────────────────── */
-html.light-mode .from-amber-900\/40 { --tw-gradient-from: rgba(196,84,26,0.08); }
+html.light-mode .from-amber-900\/40 { --tw-gradient-from: rgba(37,99,235,0.08); }
 
 /* ── Date input color-scheme fix ─────────────────────────────────────────── */
 html.light-mode .\[color-scheme\:dark\] { color-scheme: light; }
@@ -150,18 +154,18 @@ html.light-mode .\[color-scheme\:dark\] { color-scheme: light; }
 /* ── Navbar / bottom nav thick borders ───────────────────────────────────── */
 html.light-mode .border-b-2.border-gray-800,
 html.light-mode .border-t-2.border-gray-800 {
-  border-color: #C4BAAA !important;
+  border-color: #CBD5E1 !important;
 }
 
-/* ── Amber accent bg/border variants ─────────────────────────────────────── */
-html.light-mode .text-amber-400\/50    { color: rgba(184,64,16,0.55) !important; }
-html.light-mode .bg-amber-500\/10      { background-color: rgba(196,84,26,0.09) !important; }
-html.light-mode .bg-amber-500\/15      { background-color: rgba(196,84,26,0.12) !important; }
-html.light-mode .border-amber-500\/40  { border-color: rgba(196,84,26,0.40) !important; }
-html.light-mode .border-amber-500\/30  { border-color: rgba(196,84,26,0.32) !important; }
-html.light-mode .border-amber-500\/25  { border-color: rgba(196,84,26,0.28) !important; }
-html.light-mode .border-amber-500\/20  { border-color: rgba(196,84,26,0.22) !important; }
-html.light-mode .hover\:bg-amber-500\/10:hover { background-color: rgba(196,84,26,0.09) !important; }
+/* ── Blue accent bg/border variants ──────────────────────────────────────── */
+html.light-mode .text-amber-400\/50    { color: rgba(37,99,235,0.55) !important; }
+html.light-mode .bg-amber-500\/10      { background-color: rgba(37,99,235,0.09) !important; }
+html.light-mode .bg-amber-500\/15      { background-color: rgba(37,99,235,0.12) !important; }
+html.light-mode .border-amber-500\/40  { border-color: rgba(37,99,235,0.40) !important; }
+html.light-mode .border-amber-500\/30  { border-color: rgba(37,99,235,0.32) !important; }
+html.light-mode .border-amber-500\/25  { border-color: rgba(37,99,235,0.28) !important; }
+html.light-mode .border-amber-500\/20  { border-color: rgba(37,99,235,0.22) !important; }
+html.light-mode .hover\:bg-amber-500\/10:hover { background-color: rgba(37,99,235,0.09) !important; }
 
 /* ── AI / violet accents ─────────────────────────────────────────────────── */
 html.light-mode .text-violet-300       { color: #6d28d9 !important; }
@@ -173,11 +177,11 @@ html.light-mode .bg-violet-500\/10     { background-color: rgba(109,40,217,0.09)
 html.light-mode .border-violet-500\/20 { border-color: rgba(109,40,217,0.20) !important; }
 html.light-mode .border-violet-500\/30 { border-color: rgba(109,40,217,0.28) !important; }
 html.light-mode .border-violet-500\/50 { border-color: rgba(109,40,217,0.45) !important; }
-html.light-mode .text-orange-300\/90   { color: rgba(154,52,18,0.92) !important; }
+html.light-mode .text-orange-300\/90   { color: rgba(234,88,12,0.92) !important; }
 
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
-html.light-mode .ring-gray-800\/60 { --tw-ring-color: rgba(224,216,200,0.65); }
+html.light-mode .ring-gray-800\/60 { --tw-ring-color: rgba(226,232,240,0.65); }
 html.light-mode .border-gray-800.border-t-amber-400 {
-  border-color: #D8CEBC !important;
-  border-top-color: #C4541A !important;
+  border-color: #E2E8F0 !important;
+  border-top-color: #2563EB !important;
 }

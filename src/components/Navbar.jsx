@@ -17,7 +17,7 @@ const NAV_LINKS = [
 
 const activeCls   = 'text-amber-500 border-b-2 border-amber-500';
 const inactiveCls = 'text-gray-500 hover:text-gray-50 border-b-2 border-transparent';
-const linkCls     = 'px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider transition-all duration-150';
+const linkCls     = 'px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -262,7 +262,7 @@ export default function Navbar() {
             {/* Add Shirt */}
             <button
               onClick={openAddShirt}
-              className={`${linkCls} ml-2 border border-gray-700 hover:border-gray-500 hover:text-gray-50 text-gray-500`}
+              className={`${linkCls} ml-2 border-2 border-gray-700 hover:border-orange-500 hover:text-orange-500 text-gray-500 transition-all duration-150`}
             >
               + Add Shirt
             </button>

@@ -59,7 +59,7 @@ const rangeCls = [
   '[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto',
   '[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4',
   '[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-amber-500',
-  '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#1A1209]',
+  '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#0F172A]',
   '[&::-moz-range-thumb]:cursor-grab',
   '[&::-moz-range-track]:bg-transparent',
 ].join(' ');
@@ -177,7 +177,9 @@ function ShirtCard({ shirt }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-5xl opacity-10 select-none">👕</span>
+            <svg className="w-12 h-12 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v2l3 3-3 3v8a2 2 0 002 2h14a2 2 0 002-2v-8l-3-3 3-3V5a2 2 0 00-2-2h-4m-4 0v18m0-18h4m-4 0H9" />
+            </svg>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -227,7 +229,9 @@ function WallTile({ shirt }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-800">
-          <span className="text-4xl opacity-10 select-none">👕</span>
+          <svg className="w-10 h-10 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v2l3 3-3 3v8a2 2 0 002 2h14a2 2 0 002-2v-8l-3-3 3-3V5a2 2 0 00-2-2h-4m-4 0v18m0-18h4m-4 0H9" />
+          </svg>
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-250 flex flex-col justify-end p-2">
@@ -462,7 +466,7 @@ export default function Collection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-gray-50 tracking-tight">My Collection</h1>
+          <h1 className="font-display text-3xl text-gray-50 tracking-tight">My Collection</h1>
           {!loading && (
             <p className="font-condensed text-xs uppercase tracking-wider text-gray-500 mt-1">
               {hasFilters
@@ -491,7 +495,7 @@ export default function Collection() {
           </div>
           <Link
             to="/shirts/new"
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 border-2 border-amber-500 hover:border-amber-600 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.12em] transition-all duration-150"
+            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 border-2 border-orange-500 hover:border-orange-600 text-white font-condensed text-xs font-bold uppercase tracking-[0.12em] transition-all duration-150 cursor-pointer"
           >
             + Add Shirt
           </Link>
@@ -574,7 +578,7 @@ export default function Collection() {
               <p className="text-gray-600 text-sm mb-6">Every great collection starts with one shirt.</p>
               <Link
                 to="/shirts/new"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 border-2 border-amber-500 hover:border-amber-600 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.15em] transition-all duration-150"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 border-2 border-orange-500 hover:border-orange-600 text-white font-condensed text-xs font-bold uppercase tracking-[0.15em] transition-all duration-150 cursor-pointer"
               >
                 Add your first shirt
               </Link>

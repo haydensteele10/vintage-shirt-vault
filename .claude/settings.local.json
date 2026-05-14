@@ -9,7 +9,13 @@
       "Bash(npm run *)",
       "Bash(node --input-type=module)",
       "Bash(node *)",
-      "Bash(findstr /i \"warning\\\\|error\\\\|unused\\\\|defined\")"
+      "Bash(findstr /i \"warning\\\\|error\\\\|unused\\\\|defined\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "PowerShell(ls -Path \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\" | ft Name, @{n='IsDir';e={$_.PSIsContainer}})",
+      "Bash(grep -E \"\\\\.jsx?$\")",
+      "Bash(python *)",
+      "Bash(npm start *)"
     ]
   }
 }

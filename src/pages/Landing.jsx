@@ -20,14 +20,14 @@ export default function Landing() {
         <div className="flex items-center gap-4">
           <Link
             to="/login"
-            className="font-condensed text-xs uppercase tracking-wider font-semibold text-gray-500 hover:text-gray-50 transition-colors"
+            className="font-condensed text-xs uppercase tracking-wider font-semibold text-gray-500 hover:text-gray-50 transition-colors duration-150 cursor-pointer"
           >
             Log in
           </Link>
           <Link
             to="/login"
             state={{ mode: 'signup' }}
-            className="px-5 py-2 bg-amber-500 border-2 border-amber-500 text-gray-950 font-condensed font-bold text-xs uppercase tracking-[0.15em] hover:bg-amber-600 hover:border-amber-600 transition-all"
+            className="px-5 py-2 bg-orange-500 border-2 border-orange-500 text-white font-condensed font-bold text-xs uppercase tracking-[0.15em] hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 cursor-pointer"
           >
             Sign up
           </Link>
@@ -37,7 +37,7 @@ export default function Landing() {
       {/* Hero */}
       <main className="flex-1 flex flex-col justify-center px-6 sm:px-10 py-16 sm:py-20">
         <div className="max-w-5xl">
-          <h1 className="font-serif font-bold text-[clamp(4rem,11vw,8.5rem)] leading-[0.88] tracking-tight text-gray-50 mb-8">
+          <h1 className="font-display text-[clamp(4rem,11vw,8.5rem)] leading-[0.88] tracking-tight text-gray-50 mb-8">
             YOUR<br />VAULT.
           </h1>
           <p className="text-gray-500 text-base sm:text-lg max-w-xs leading-relaxed mb-10 ml-1">
@@ -47,13 +47,13 @@ export default function Landing() {
             <Link
               to="/login"
               state={{ mode: 'signup' }}
-              className="px-8 py-4 bg-amber-500 border-2 border-amber-500 text-gray-950 font-condensed font-bold text-sm uppercase tracking-[0.15em] hover:bg-amber-600 hover:border-amber-600 transition-all"
+              className="px-8 py-4 bg-orange-500 border-2 border-orange-500 text-white font-condensed font-bold text-sm uppercase tracking-[0.15em] hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 cursor-pointer"
             >
               Start tracking free
             </Link>
             <Link
               to="/login"
-              className="px-8 py-4 border-2 border-gray-700 text-gray-400 font-condensed font-semibold text-sm uppercase tracking-[0.15em] hover:border-gray-400 hover:text-gray-50 transition-all"
+              className="px-8 py-4 border-2 border-gray-700 text-gray-400 font-condensed font-semibold text-sm uppercase tracking-[0.15em] hover:border-gray-400 hover:text-gray-50 transition-all duration-150 cursor-pointer"
             >
               Sign in
             </Link>

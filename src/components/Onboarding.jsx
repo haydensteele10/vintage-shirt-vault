@@ -147,7 +147,7 @@ export default function Onboarding({ onDone }) {
         {isLast ? (
           <button
             onClick={onDone}
-            className="w-full max-w-xs py-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 font-bold text-[15px] rounded-2xl transition-all shadow-glow"
+            className="w-full max-w-xs py-4 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-condensed font-bold text-sm uppercase tracking-wider transition-all duration-150 cursor-pointer"
           >
             Get Started
           </button>

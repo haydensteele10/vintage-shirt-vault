@@ -94,7 +94,7 @@ function ShowcasePicker({ shirts, current, onSave, onClose }) {
           </div>
           <button
             onClick={() => onSave([...selected])}
-            className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold text-xs rounded-xl transition-all"
+            className="px-4 py-1.5 bg-orange-500 hover:bg-orange-400 text-white font-condensed font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer"
           >
             Done
           </button>
@@ -364,7 +364,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
-                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-amber-500 hover:bg-amber-400 border-2 border-gray-900 flex items-center justify-center transition-all"
+                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-orange-500 hover:bg-orange-400 border-2 border-gray-900 flex items-center justify-center transition-all duration-150 cursor-pointer"
                   aria-label="Upload photo"
                 >
                   <svg className="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,7 +426,7 @@ export default function Profile() {
                 <button
                   onClick={saveProfile}
                   disabled={saving}
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold text-sm rounded-xl transition-all disabled:opacity-40 shadow-glow-sm"
+                  className="px-5 py-2 bg-orange-500 hover:bg-orange-400 text-white font-condensed font-bold text-xs uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
                 >
                   {saving ? 'Saving…' : 'Save'}
                 </button>

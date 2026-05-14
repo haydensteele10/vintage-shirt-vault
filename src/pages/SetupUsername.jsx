@@ -96,7 +96,7 @@ export default function SetupUsername() {
           <button
             type="submit"
             disabled={saving || !username.trim()}
-            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 font-bold text-sm rounded-2xl transition-all disabled:opacity-40 shadow-glow-sm"
+            className="w-full py-3.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-condensed font-bold text-sm uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Continue'}
           </button>

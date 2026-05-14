@@ -65,7 +65,7 @@ export default function PriceHistory() {
           className={`flex-shrink-0 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-150 ${
             adding
               ? 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700'
-              : 'bg-amber-500 hover:bg-amber-400 text-gray-950 shadow-glow-sm hover:shadow-glow'
+              : 'bg-orange-500 hover:bg-orange-400 text-white'
           }`}
         >
           {adding ? 'Cancel' : '+ Log Price'}
@@ -123,7 +123,7 @@ export default function PriceHistory() {
           <button
             type="submit"
             disabled={saving}
-            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-gray-950 text-sm font-semibold rounded-xl transition-all duration-150 disabled:opacity-40 shadow-glow-sm"
+            className="px-5 py-2.5 bg-orange-500 hover:bg-orange-400 text-white font-condensed font-bold text-xs uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
           >
             {saving ? 'Saving…' : 'Save Entry'}
           </button>

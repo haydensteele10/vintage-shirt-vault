@@ -59,7 +59,7 @@ function Tab({ to, end, label, Icon }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-1.5 py-3 min-w-0 flex-1 transition-colors ${
+        `flex flex-col items-center gap-1 px-1.5 py-3 min-w-0 flex-1 transition-colors duration-150 cursor-pointer ${
           isActive ? 'text-amber-500' : 'text-gray-600 active:text-gray-400'
         }`
       }
@@ -87,7 +87,7 @@ export default function BottomNav() {
         <div className="flex flex-col items-center gap-1 px-1.5 py-2 flex-1">
           <button
             onClick={openAddShirt}
-            className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 ring-2 ring-gray-950 transition-colors"
+            className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-orange-500 active:bg-orange-600 ring-2 ring-gray-950 transition-colors duration-150 cursor-pointer"
             aria-label="Add shirt"
           >
             <svg className="w-6 h-6 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>

@@ -189,14 +189,14 @@ export default function ShirtDetail() {
           <div className="flex gap-3 pt-1">
             <Link
               to={`/shirts/${id}/edit`}
-              className="flex-1 text-center px-5 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-semibold rounded-xl transition-all duration-150 shadow-glow-sm hover:shadow-glow"
+              className="flex-1 text-center px-5 py-2.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-condensed font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer"
             >
               Edit Shirt
             </Link>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="px-5 py-2.5 border border-gray-700 text-gray-500 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 text-sm font-semibold rounded-xl transition-all duration-150 disabled:opacity-40"
+              className="px-5 py-2.5 border-2 border-gray-700 text-gray-500 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 font-condensed text-xs font-semibold uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
             >
               {deleting ? 'Deleting…' : 'Delete'}
             </button>

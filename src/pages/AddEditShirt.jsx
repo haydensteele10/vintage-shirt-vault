@@ -869,7 +869,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
                     if (liveAvg != null) setForm((f) => ({ ...f, current_value: liveAvg.toFixed(2) }));
                   }}
                   disabled={liveAvg == null}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-glow-sm"
+                  className="px-4 py-2.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white text-sm font-bold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Use This Average
                 </button>
@@ -906,7 +906,7 @@ export default function AddEditShirt({ forceNewMode = false, initialData = null,
           <button
             type="submit"
             disabled={isBusy}
-            className="px-7 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 font-semibold rounded-xl transition-all duration-150 disabled:opacity-40 shadow-glow-sm hover:shadow-glow"
+            className="px-7 py-2.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-condensed font-bold text-sm uppercase tracking-wider transition-all duration-150 disabled:opacity-40 cursor-pointer"
           >
             {buttonLabel}
           </button>

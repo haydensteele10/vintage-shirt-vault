@@ -89,7 +89,7 @@ function ChartTooltip({ active, payload, label, rangeKey, privacyMode }) {
   return (
     <div className="bg-gray-900 border-2 border-gray-700 px-4 py-3">
       <p className="font-condensed text-[10px] uppercase tracking-wider text-gray-500 mb-1">{formatTooltipDate(label, rangeKey)}</p>
-      <p className="font-serif text-sm font-bold text-amber-500 tabular-nums">
+      <p className="font-condensed text-sm font-bold text-amber-500 tabular-nums">
         {privacyMode ? '••••••' : fmtUsd(payload[0].value)}
       </p>
     </div>
@@ -214,9 +214,9 @@ export default function Dashboard() {
           <button
             onClick={togglePrivacy}
             aria-label={privacyMode ? 'Show portfolio value' : 'Hide portfolio value'}
-            className="flex items-center gap-2.5 group focus:outline-none"
+            className="flex items-center gap-2.5 group focus:outline-none cursor-pointer"
           >
-            <span className="font-serif text-6xl sm:text-8xl font-bold text-gray-50 tracking-tight tabular-nums leading-none select-none">
+            <span className="font-display text-6xl sm:text-8xl text-gray-50 tracking-tight tabular-nums leading-none select-none">
               {privacyMode ? MASK : fmtUsd(totalValue)}
             </span>
             <span className="text-gray-600 group-hover:text-gray-400 transition-colors duration-150 mb-1 flex-shrink-0">
@@ -260,7 +260,7 @@ export default function Dashboard() {
             <button
               key={r.key}
               onClick={() => setSelectedRange(r)}
-              className={`px-3 py-2 font-condensed text-[10px] font-bold uppercase tracking-wider transition-all duration-150 border-b-2 -mb-px ${
+              className={`px-3 py-2 font-condensed text-[10px] font-bold uppercase tracking-wider transition-all duration-150 border-b-2 -mb-px cursor-pointer ${
                 selectedRange.key === r.key
                   ? 'text-amber-500 border-amber-500'
                   : 'text-gray-600 border-transparent hover:text-gray-300'
@@ -277,10 +277,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
                 <defs>
-                  <linearGradient id="rustGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#C4541A" stopOpacity={0.30} />
-                    <stop offset="75%"  stopColor="#C4541A" stopOpacity={0.05} />
-                    <stop offset="100%" stopColor="#C4541A" stopOpacity={0}    />
+                  <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#2563EB" stopOpacity={0.30} />
+                    <stop offset="75%"  stopColor="#2563EB" stopOpacity={0.05} />
+                    <stop offset="100%" stopColor="#2563EB" stopOpacity={0}    />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" hide />
@@ -292,11 +292,11 @@ export default function Dashboard() {
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#C4541A"
+                  stroke="#2563EB"
                   strokeWidth={2.5}
-                  fill="url(#rustGrad)"
+                  fill="url(#blueGrad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: '#C4541A', stroke: '#1A1209', strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: '#2563EB', stroke: '#0F172A', strokeWidth: 2 }}
                   isAnimationActive={false}
                 />
               </AreaChart>
@@ -320,7 +320,7 @@ export default function Dashboard() {
         <section className="lg:border-r-2 border-gray-800 pt-6 lg:pr-6">
           <div className="flex items-center justify-between pb-3 border-b-2 border-gray-800 mb-0">
             <h2 className="font-condensed font-bold text-xs uppercase tracking-[0.2em] text-gray-100">Most Valuable</h2>
-            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors">
+            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-orange-500 hover:text-orange-400 transition-colors duration-150 cursor-pointer">
               View all →
             </Link>
           </div>
@@ -348,11 +348,11 @@ export default function Dashboard() {
                     <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                       <Link
                         to={`/shirts/${s.id}`}
-                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 py-3.5 hover:bg-gray-800/20 transition-colors group"
+                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 py-3.5 hover:bg-gray-800/20 transition-colors duration-150 group cursor-pointer"
                       >
                         <span className="font-condensed text-xs font-bold text-gray-700 text-center">{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-500 transition-colors truncate leading-snug">
+                          <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-500 transition-colors duration-150 truncate leading-snug">
                             {s.brand}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
@@ -379,7 +379,7 @@ export default function Dashboard() {
         <section className="pt-6 lg:pl-6">
           <div className="flex items-center justify-between pb-3 border-b-2 border-gray-800 mb-0">
             <h2 className="font-condensed font-bold text-xs uppercase tracking-[0.2em] text-gray-100">Recent Additions</h2>
-            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors">
+            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-orange-500 hover:text-orange-400 transition-colors duration-150 cursor-pointer">
               View all →
             </Link>
           </div>
@@ -387,7 +387,7 @@ export default function Dashboard() {
           {recent.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-600 text-sm">No shirts yet.</p>
-              <Link to="/shirts/new" className="font-condensed text-xs uppercase tracking-wider text-amber-500 hover:text-amber-400 mt-1 inline-block transition-colors">
+              <Link to="/shirts/new" className="font-condensed text-xs uppercase tracking-wider text-orange-500 hover:text-orange-400 mt-1 inline-block transition-colors duration-150 cursor-pointer">
                 Add your first shirt →
               </Link>
             </div>
@@ -397,7 +397,7 @@ export default function Dashboard() {
                 <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                   <Link
                     to={`/shirts/${s.id}`}
-                    className="flex items-center justify-between py-3.5 hover:bg-gray-800/20 transition-colors group"
+                    className="flex items-center justify-between py-3.5 hover:bg-gray-800/20 transition-colors duration-150 group cursor-pointer"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-500 transition-colors truncate leading-snug">
