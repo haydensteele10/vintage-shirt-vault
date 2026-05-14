@@ -15,9 +15,9 @@ const NAV_LINKS = [
   { to: '/profile',    label: 'Profile',    end: false },
 ];
 
-const activeCls   = 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/25';
-const inactiveCls = 'text-gray-400 hover:text-gray-100 hover:bg-gray-800/70';
-const linkCls     = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150';
+const activeCls   = 'text-amber-500 border-b-2 border-amber-500';
+const inactiveCls = 'text-gray-500 hover:text-gray-50 border-b-2 border-transparent';
+const linkCls     = 'px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider transition-all duration-150';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -56,22 +56,21 @@ function timeAgo(dateStr) {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
-// Shows the actor's avatar when available, otherwise a type-specific icon
 function NotifAvatar({ profile, type }) {
   if (profile) {
     const initials = (profile.username ?? 'u').slice(0, 2).toUpperCase();
     return (
-      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+      <div className="w-9 h-9 bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {profile.avatar_url
           ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-          : <span className="text-xs font-bold text-amber-400">{initials}</span>
+          : <span className="text-xs font-bold text-amber-500">{initials}</span>
         }
       </div>
     );
   }
   if (type === 'price_change') {
     return (
-      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
+      <div className="w-9 h-9 bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
         <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
         </svg>
@@ -79,7 +78,7 @@ function NotifAvatar({ profile, type }) {
     );
   }
   return (
-    <div className="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
+    <div className="w-9 h-9 bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
       <BellIcon />
     </div>
   );
@@ -92,9 +91,8 @@ function NotificationBell({ user }) {
   const [profileMap, setProfileMap] = useState({});
   const [open, setOpen]             = useState(false);
   const ref          = useRef(null);
-  const fetchedIds   = useRef(new Set()); // prevent duplicate profile fetches
+  const fetchedIds   = useRef(new Set());
 
-  // Fetch profiles for a list of from_user_id values (deduped)
   function fetchProfiles(ids) {
     const toFetch = ids.filter((id) => id && !fetchedIds.current.has(id));
     if (!toFetch.length) return;
@@ -143,7 +141,6 @@ function NotificationBell({ user }) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     function handle(e) {
@@ -172,22 +169,22 @@ function NotificationBell({ user }) {
       <button
         onClick={handleToggle}
         aria-label="Notifications"
-        className={`relative p-2 rounded-lg transition-all duration-150 ${inactiveCls}`}
+        className={`relative p-2 transition-all duration-150 ${inactiveCls}`}
       >
         <BellIcon />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none pointer-events-none">
+          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none pointer-events-none">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-800/60 rounded-2xl shadow-2xl z-[100] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/60">
-            <p className="text-sm font-semibold text-gray-100">Notifications</p>
+        <div className="absolute right-0 top-full mt-0 w-80 bg-gray-900 border-2 border-gray-800 z-[100] overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b-2 border-gray-800">
+            <p className="font-condensed text-xs font-bold uppercase tracking-[0.15em] text-gray-100">Notifications</p>
             {notifs.length > 0 && unread === 0 && (
-              <span className="text-[10px] text-gray-600 font-medium">All caught up</span>
+              <span className="font-condensed text-[10px] uppercase tracking-wider text-gray-600">All caught up</span>
             )}
           </div>
 
@@ -212,10 +209,10 @@ function NotificationBell({ user }) {
                     <p className={`text-xs leading-snug ${notif.read ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
                       {notif.message}
                     </p>
-                    <p className="text-[10px] text-gray-600 mt-1">{timeAgo(notif.created_at)}</p>
+                    <p className="font-condensed text-[10px] uppercase tracking-wider text-gray-600 mt-1">{timeAgo(notif.created_at)}</p>
                   </div>
                   {!notif.read && (
-                    <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
+                    <span className="w-2 h-2 bg-amber-500 flex-shrink-0 mt-1.5" />
                   )}
                 </li>
               ))}
@@ -236,19 +233,21 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-gray-800/60"
+      className="sticky top-0 z-50 bg-gray-950 border-b-2 border-gray-800"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-15 py-3">
-        <NavLink to="/dashboard" className="flex items-center gap-2.5 font-bold text-base tracking-tight group">
-          <TagIcon size={26} />
-          <span className="text-gray-100 group-hover:text-amber-400 transition-colors">Tag Charting</span>
+        <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
+          <TagIcon size={24} />
+          <span className="font-condensed font-semibold text-sm uppercase tracking-[0.2em] text-gray-50 group-hover:text-amber-500 transition-colors">
+            Tag Charting
+          </span>
         </NavLink>
 
         <div className="flex items-center gap-1">
           <NotificationBell user={user} />
 
-          <nav className="hidden sm:flex items-center gap-0.5">
+          <nav className="hidden sm:flex items-center gap-0">
             {NAV_LINKS.map(({ to, label, end }) => (
               <NavLink
                 key={to}
@@ -263,7 +262,7 @@ export default function Navbar() {
             {/* Add Shirt */}
             <button
               onClick={openAddShirt}
-              className={`${linkCls} ${inactiveCls}`}
+              className={`${linkCls} ml-2 border border-gray-700 hover:border-gray-500 hover:text-gray-50 text-gray-500`}
             >
               + Add Shirt
             </button>
@@ -272,7 +271,7 @@ export default function Navbar() {
             <button
               onClick={toggle}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className={`ml-1 p-2 rounded-lg ${inactiveCls}`}
+              className={`ml-1 p-2 transition-all duration-150 ${inactiveCls}`}
             >
               {isDark ? <SunIcon /> : <MoonIcon />}
             </button>

@@ -27,7 +27,6 @@ const fmtUsd = (n) =>
     ? `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '—';
 
-
 function formatTooltipDate(ts, rangeKey) {
   if (!ts || ts <= 0) return '—';
   const d = new Date(ts);
@@ -38,7 +37,7 @@ function formatTooltipDate(ts, rangeKey) {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-const MIN_VALID_TS = new Date('2020-01-01').getTime(); // filter pre-2020 junk dates
+const MIN_VALID_TS = new Date('2020-01-01').getTime();
 
 function validTs(raw) {
   if (!raw) return null;
@@ -46,50 +45,32 @@ function validTs(raw) {
   return (!isNaN(ms) && ms >= MIN_VALID_TS) ? ms : null;
 }
 
-/**
- * Build a portfolio value timeline from raw price_history rows.
- * Skips any entry whose recorded_at is null, 0, or otherwise invalid.
- */
 function buildTimeline(history) {
   if (!history.length) return [];
-
   const valid = history.filter(e => validTs(e.recorded_at) !== null);
   if (!valid.length) return [];
-
   const sorted = [...valid].sort((a, b) => validTs(a.recorded_at) - validTs(b.recorded_at));
-
   const current = {};
   const points  = [];
-
   for (const entry of sorted) {
     current[entry.shirt_id] = entry.price;
     const total = Object.values(current).reduce((a, b) => a + b, 0);
     points.push({ date: validTs(entry.recorded_at), value: total });
   }
-
   const last = points[points.length - 1];
   if (last.date < Date.now() - 60_000) {
     points.push({ date: Date.now(), value: last.value });
   }
-
   return points;
 }
 
-
-/**
- * Slice the timeline to the selected range, prepending the range-start boundary
- * with its interpolated value so the chart always starts at the left edge.
- */
 function getVisibleData(points, rangeMs) {
   if (points.length === 0) return [];
-
-  const now       = Date.now();
+  const now        = Date.now();
   const rangeStart = rangeMs ? now - rangeMs : points[0].date;
-
-  const before = points.filter(p => p.date <= rangeStart);
+  const before     = points.filter(p => p.date <= rangeStart);
   const startValue = before.length ? before[before.length - 1].value : points[0].value;
-
-  const inRange = points.filter(p => p.date > rangeStart);
+  const inRange    = points.filter(p => p.date > rangeStart);
   return [{ date: rangeStart, value: startValue }, ...inRange];
 }
 
@@ -98,7 +79,7 @@ function getVisibleData(points, rangeMs) {
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
+      <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-500 animate-spin" />
     </div>
   );
 }
@@ -106,9 +87,9 @@ function Spinner() {
 function ChartTooltip({ active, payload, label, rangeKey, privacyMode }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-gray-800 border border-gray-700/80 rounded-xl px-4 py-3 shadow-2xl">
-      <p className="text-xs text-gray-500 mb-1">{formatTooltipDate(label, rangeKey)}</p>
-      <p className="text-sm font-bold text-amber-400 tabular-nums">
+    <div className="bg-gray-900 border-2 border-gray-700 px-4 py-3">
+      <p className="font-condensed text-[10px] uppercase tracking-wider text-gray-500 mb-1">{formatTooltipDate(label, rangeKey)}</p>
+      <p className="font-serif text-sm font-bold text-amber-500 tabular-nums">
         {privacyMode ? '••••••' : fmtUsd(payload[0].value)}
       </p>
     </div>
@@ -195,15 +176,13 @@ export default function Dashboard() {
   useRegisterPullRefresh(load);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
-  const totalValue  = allShirts.reduce((s, r) => s + (r.current_value   ?? 0), 0);
-  const totalCost   = allShirts.reduce((s, r) => s + (r.purchase_price  ?? 0), 0);
+  const totalValue  = allShirts.reduce((s, r) => s + (r.current_value  ?? 0), 0);
+  const totalCost   = allShirts.reduce((s, r) => s + (r.purchase_price ?? 0), 0);
   const shirtCount  = allShirts.length;
 
-  // ── Chart data (real price_history only — no synthetic fallback) ───────────
   const allPoints = useMemo(() => buildTimeline(history), [history]);
   const chartData = useMemo(() => getVisibleData(allPoints, selectedRange.ms), [allPoints, selectedRange]);
 
-  // Range-relative gain: compare current portfolio value vs. value at range start
   const rangeStartValue = chartData.length > 0 ? chartData[0].value : 0;
   const rangeGain       = totalValue - rangeStartValue;
   const rangeGainPct    = rangeStartValue > 0 ? (rangeGain / rangeStartValue) * 100 : 0;
@@ -217,76 +196,74 @@ export default function Dashboard() {
   const hasChart = chartData.length >= 2;
 
   return (
-    <div className="space-y-5">
+    <div>
 
-      {/* ── Hero + Chart card ─────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
+      {/* ── Value + Chart ─────────────────────────────────────────────────── */}
+      <div className="pb-8 border-b-2 border-gray-800">
 
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest">
-              Total Portfolio Value
-            </p>
-            <RefreshButton onRefresh={load} loading={loading} />
-          </div>
+        {/* Label row */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-condensed text-xs font-semibold text-gray-600 uppercase tracking-[0.2em]">
+            Portfolio Value
+          </p>
+          <RefreshButton onRefresh={load} loading={loading} />
+        </div>
 
-          {/* Big value */}
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-            <button
-              onClick={togglePrivacy}
-              aria-label={privacyMode ? 'Show portfolio value' : 'Hide portfolio value'}
-              className="flex items-center gap-2.5 group focus:outline-none"
-            >
-              <span className="text-5xl sm:text-6xl font-bold text-gray-50 tracking-tight tabular-nums leading-none select-none">
-                {privacyMode ? MASK : fmtUsd(totalValue)}
-              </span>
-              <span className="text-gray-600 group-hover:text-gray-400 transition-colors duration-150 mb-1 flex-shrink-0">
-                {privacyMode ? <EyeSlashIcon /> : <EyeIcon />}
-              </span>
-            </button>
-
-            {/* Range gain pill */}
-            <div className={`flex items-center gap-1.5 mb-1 text-sm font-semibold tabular-nums ${gainUp ? 'text-emerald-400' : 'text-red-400'}`}>
-              <span className="text-base leading-none">{gainUp ? '▲' : '▼'}</span>
-              <span>{privacyMode ? MASK : fmtUsd(Math.abs(rangeGain))}</span>
-              <span className="font-medium">
-                ({gainUp ? '+' : ''}{privacyMode ? '••%' : `${rangeGainPct.toFixed(2)}%`})
-              </span>
-              <span className="text-gray-600 font-normal ml-0.5 text-xs">
-                {selectedRange.key === 'MAX' ? 'all time' : `past ${selectedRange.label}`}
-              </span>
-            </div>
-          </div>
-
-          {/* Mini stats strip */}
-          <div className="flex flex-wrap gap-5 mt-4 text-xs text-gray-600">
-            <span>
-              <span className="text-gray-400 font-semibold">{shirtCount}</span>{' '}
-              shirt{shirtCount !== 1 ? 's' : ''}
+        {/* Big value */}
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-2 mb-4">
+          <button
+            onClick={togglePrivacy}
+            aria-label={privacyMode ? 'Show portfolio value' : 'Hide portfolio value'}
+            className="flex items-center gap-2.5 group focus:outline-none"
+          >
+            <span className="font-serif text-6xl sm:text-8xl font-bold text-gray-50 tracking-tight tabular-nums leading-none select-none">
+              {privacyMode ? MASK : fmtUsd(totalValue)}
             </span>
-            <span>
-              <span className="text-gray-400 font-semibold">
-                {privacyMode ? MASK : fmtUsd(totalCost)}
-              </span>{' '}
-              cost basis
+            <span className="text-gray-600 group-hover:text-gray-400 transition-colors duration-150 mb-1 flex-shrink-0">
+              {privacyMode ? <EyeSlashIcon /> : <EyeIcon />}
             </span>
-            <span className={`font-semibold ${allTimeGainPct >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-              {privacyMode ? '••%' : `${allTimeGainPct >= 0 ? '+' : ''}${allTimeGainPct.toFixed(1)}%`} all-time return
+          </button>
+
+          {/* Range gain */}
+          <div className={`flex items-center gap-1.5 mb-1 text-sm font-semibold tabular-nums ${gainUp ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className="text-base leading-none">{gainUp ? '▲' : '▼'}</span>
+            <span>{privacyMode ? MASK : fmtUsd(Math.abs(rangeGain))}</span>
+            <span className="font-medium">
+              ({gainUp ? '+' : ''}{privacyMode ? '••%' : `${rangeGainPct.toFixed(2)}%`})
+            </span>
+            <span className="font-condensed text-gray-600 font-normal ml-0.5 text-xs uppercase tracking-wide">
+              {selectedRange.key === 'MAX' ? 'all time' : `past ${selectedRange.label}`}
             </span>
           </div>
         </div>
 
-        {/* Range buttons */}
-        <div className="flex items-center gap-1 px-6 pb-4">
+        {/* Mini stats strip */}
+        <div className="flex flex-wrap gap-5 mb-5 font-condensed text-xs text-gray-600 uppercase tracking-wide">
+          <span>
+            <span className="text-gray-400 font-bold">{shirtCount}</span>{' '}
+            shirt{shirtCount !== 1 ? 's' : ''}
+          </span>
+          <span>
+            <span className="text-gray-400 font-bold">
+              {privacyMode ? MASK : fmtUsd(totalCost)}
+            </span>{' '}
+            cost basis
+          </span>
+          <span className={`font-bold ${allTimeGainPct >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            {privacyMode ? '••%' : `${allTimeGainPct >= 0 ? '+' : ''}${allTimeGainPct.toFixed(1)}%`} all-time
+          </span>
+        </div>
+
+        {/* Range selector */}
+        <div className="flex items-center gap-0 border-b border-gray-800 mb-0">
           {RANGES.map((r) => (
             <button
               key={r.key}
               onClick={() => setSelectedRange(r)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-150 ${
+              className={`px-3 py-2 font-condensed text-[10px] font-bold uppercase tracking-wider transition-all duration-150 border-b-2 -mb-px ${
                 selectedRange.key === r.key
-                  ? 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30'
-                  : 'text-gray-600 hover:text-gray-300 hover:bg-gray-800'
+                  ? 'text-amber-500 border-amber-500'
+                  : 'text-gray-600 border-transparent hover:text-gray-300'
               }`}
             >
               {r.label}
@@ -294,59 +271,56 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Chart — edge-to-edge, Apple Stocks style */}
-        <div className="h-44 sm:h-56">
+        {/* Chart */}
+        <div className="h-44 sm:h-56 mt-0">
           {hasChart ? (
             <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="amberGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%"   stopColor="#fbbf24" stopOpacity={0.28} />
-                      <stop offset="75%"  stopColor="#fbbf24" stopOpacity={0.06} />
-                      <stop offset="100%" stopColor="#fbbf24" stopOpacity={0}    />
-                    </linearGradient>
-                  </defs>
-
-                  <XAxis dataKey="date" hide />
-                  <YAxis hide />
-
-                  <Tooltip
-                    content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
-                    cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1 }}
-                  />
-
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#fbbf24"
-                    strokeWidth={2.5}
-                    fill="url(#amberGrad)"
-                    dot={false}
-                    activeDot={{ r: 4, fill: '#fbbf24', stroke: '#0a0a0f', strokeWidth: 2 }}
-                    isAnimationActive={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <AreaChart data={chartData} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="rustGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#C4541A" stopOpacity={0.30} />
+                    <stop offset="75%"  stopColor="#C4541A" stopOpacity={0.05} />
+                    <stop offset="100%" stopColor="#C4541A" stopOpacity={0}    />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" hide />
+                <YAxis hide />
+                <Tooltip
+                  content={<ChartTooltip rangeKey={selectedRange.key} privacyMode={privacyMode} />}
+                  cursor={{ stroke: 'rgba(245,240,232,0.08)', strokeWidth: 1 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#C4541A"
+                  strokeWidth={2.5}
+                  fill="url(#rustGrad)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#C4541A', stroke: '#1A1209', strokeWidth: 2 }}
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center gap-3">
-              <div className="opacity-40 animate-pulse">
+              <div className="opacity-30">
                 <TagIcon size={40} />
               </div>
-              <p className="text-sm font-medium text-gray-600">Start tracking your grails</p>
+              <p className="font-condensed text-sm font-semibold uppercase tracking-wider text-gray-600">Start tracking your grails</p>
               <p className="text-xs text-gray-700">Add shirts and log prices to build your chart</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Bottom grid ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* ── Lists ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
 
         {/* Most Valuable */}
-        <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
-            <h2 className="font-semibold text-gray-100 text-sm">Most Valuable</h2>
-            <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
+        <section className="lg:border-r-2 border-gray-800 pt-6 lg:pr-6">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-gray-800 mb-0">
+            <h2 className="font-condensed font-bold text-xs uppercase tracking-[0.2em] text-gray-100">Most Valuable</h2>
+            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors">
               View all →
             </Link>
           </div>
@@ -357,45 +331,39 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {/* Table header */}
-              <div className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 px-4 sm:px-6 py-2 border-b border-gray-800/40">
+              <div className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 py-2 border-b border-gray-800/40">
                 {['#', 'Shirt', 'Value', 'Gain'].map((h) => (
-                  <span key={h} className="text-[10px] font-semibold text-gray-700 uppercase tracking-widest last:text-right">
+                  <span key={h} className="font-condensed text-[10px] font-semibold text-gray-700 uppercase tracking-widest last:text-right">
                     {h}
                   </span>
                 ))}
               </div>
-
               <ul>
                 {topValue.map((s, i) => {
                   const pct = s.purchase_price && s.current_value
                     ? ((s.current_value - s.purchase_price) / s.purchase_price) * 100
                     : null;
                   const up = pct == null || pct >= 0;
-
                   return (
                     <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                       <Link
                         to={`/shirts/${s.id}`}
-                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 px-4 sm:px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
+                        className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 py-3.5 hover:bg-gray-800/20 transition-colors group"
                       >
-                        <span className="text-xs font-bold text-gray-700 text-center">{i + 1}</span>
-
+                        <span className="font-condensed text-xs font-bold text-gray-700 text-center">{i + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-400 transition-colors truncate leading-snug">
+                          <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-500 transition-colors truncate leading-snug">
                             {s.brand}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <ConditionBadge condition={s.condition} />
-                            <span className="text-[10px] text-gray-600 capitalize">{s.style?.replace('_', ' ')}</span>
+                            <span className="font-condensed text-[10px] uppercase tracking-wide text-gray-600">{s.style?.replace('_', ' ')}</span>
                           </div>
                         </div>
-
-                        <span className="text-sm font-bold text-gray-100 tabular-nums text-right">
+                        <span className="font-condensed text-sm font-bold text-gray-100 tabular-nums text-right">
                           {privacyMode ? MASK : fmtUsd(s.current_value)}
                         </span>
-
-                        <span className={`text-xs font-bold tabular-nums text-right ${up ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span className={`font-condensed text-xs font-bold tabular-nums text-right ${up ? 'text-emerald-400' : 'text-red-400'}`}>
                           {privacyMode ? '••%' : (pct != null ? `${up ? '+' : ''}${pct.toFixed(1)}%` : '—')}
                         </span>
                       </Link>
@@ -408,10 +376,10 @@ export default function Dashboard() {
         </section>
 
         {/* Recent Additions */}
-        <section className="rounded-2xl border border-gray-800/20 overflow-hidden">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800/60">
-            <h2 className="font-semibold text-gray-100 text-sm">Recent Additions</h2>
-            <Link to="/collection" className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">
+        <section className="pt-6 lg:pl-6">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-gray-800 mb-0">
+            <h2 className="font-condensed font-bold text-xs uppercase tracking-[0.2em] text-gray-100">Recent Additions</h2>
+            <Link to="/collection" className="font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors">
               View all →
             </Link>
           </div>
@@ -419,7 +387,7 @@ export default function Dashboard() {
           {recent.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-600 text-sm">No shirts yet.</p>
-              <Link to="/shirts/new" className="text-amber-400 hover:text-amber-300 text-xs mt-1 inline-block transition-colors">
+              <Link to="/shirts/new" className="font-condensed text-xs uppercase tracking-wider text-amber-500 hover:text-amber-400 mt-1 inline-block transition-colors">
                 Add your first shirt →
               </Link>
             </div>
@@ -429,18 +397,18 @@ export default function Dashboard() {
                 <li key={s.id} className="border-b border-gray-800/30 last:border-0">
                   <Link
                     to={`/shirts/${s.id}`}
-                    className="flex items-center justify-between px-4 sm:px-6 py-3.5 hover:bg-gray-800/40 transition-colors group"
+                    className="flex items-center justify-between py-3.5 hover:bg-gray-800/20 transition-colors group"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-400 transition-colors truncate leading-snug">
+                      <p className="text-sm font-semibold text-gray-200 group-hover:text-amber-500 transition-colors truncate leading-snug">
                         {s.brand}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <ConditionBadge condition={s.condition} />
-                        <span className="text-[10px] text-gray-600 capitalize">{s.style?.replace('_', ' ')}</span>
+                        <span className="font-condensed text-[10px] uppercase tracking-wide text-gray-600">{s.style?.replace('_', ' ')}</span>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-amber-400 tabular-nums flex-shrink-0 ml-4">
+                    <span className="font-condensed text-sm font-bold text-amber-500 tabular-nums flex-shrink-0 ml-4">
                       {s.current_value ? fmtUsd(s.current_value) : '—'}
                     </span>
                   </Link>

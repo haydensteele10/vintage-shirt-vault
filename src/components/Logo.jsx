@@ -10,10 +10,10 @@ export function TagIcon({ size = 28, className = '' }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M9 7.5 Q14 1 19 7.5" stroke="#c9a84c" strokeWidth="1.8" strokeLinecap="round" />
-      <rect x="1.5" y="6" width="25" height="26.5" rx="3.5" stroke="#c9a84c" strokeWidth="1.5" fill="#c9a84c" fillOpacity="0.1" />
-      <circle cx="14" cy="9.5" r="2.5" stroke="#c9a84c" strokeWidth="1.5" />
-      <polyline points="5,30 10,24.5 15,26 20,18.5 24,21" stroke="#c9a84c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 7.5 Q14 1 19 7.5" stroke="#C4541A" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="1.5" y="6" width="25" height="26.5" rx="3.5" stroke="#C4541A" strokeWidth="1.5" fill="#C4541A" fillOpacity="0.1" />
+      <circle cx="14" cy="9.5" r="2.5" stroke="#C4541A" strokeWidth="1.5" />
+      <polyline points="5,30 10,24.5 15,26 20,18.5 24,21" stroke="#C4541A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

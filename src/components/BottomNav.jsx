@@ -59,13 +59,13 @@ function Tab({ to, end, label, Icon }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 px-1.5 py-3 text-[9px] font-medium transition-colors min-w-0 flex-1 ${
-          isActive ? 'text-amber-400' : 'text-gray-500 active:text-gray-300'
+        `flex flex-col items-center gap-1 px-1.5 py-3 min-w-0 flex-1 transition-colors ${
+          isActive ? 'text-amber-500' : 'text-gray-600 active:text-gray-400'
         }`
       }
     >
       <Icon />
-      <span>{label}</span>
+      <span className="font-condensed text-[8px] font-semibold uppercase tracking-wider">{label}</span>
     </NavLink>
   );
 }
@@ -75,7 +75,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-950/95 backdrop-blur-md border-t border-gray-800/60"
+      className="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-gray-950 border-t-2 border-gray-800"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-end">
@@ -84,17 +84,17 @@ export default function BottomNav() {
         <Tab to="/search"          label="Search"     Icon={SearchIcon} />
 
         {/* Center FAB */}
-        <div className="flex flex-col items-center gap-1 px-1.5 py-2 text-[9px] font-medium text-gray-500 flex-1">
+        <div className="flex flex-col items-center gap-1 px-1.5 py-2 flex-1">
           <button
             onClick={openAddShirt}
-            className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 shadow-lg shadow-amber-500/30 ring-4 ring-gray-950 transition-colors"
+            className="w-12 h-12 -mt-5 flex items-center justify-center rounded-full bg-amber-500 active:bg-amber-600 ring-2 ring-gray-950 transition-colors"
             aria-label="Add shirt"
           >
             <svg className="w-6 h-6 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
           </button>
-          <span className="mt-0.5">Add</span>
+          <span className="font-condensed text-[8px] font-semibold uppercase tracking-wider text-gray-600 mt-0.5">Add</span>
         </div>
 
         <Tab to="/social"          label="Social"     Icon={SocialIcon} />

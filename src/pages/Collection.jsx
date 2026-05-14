@@ -45,7 +45,7 @@ const SORTS = [
 
 const DEFAULT_SORT = 'date_desc';
 
-const selectCls = 'flex-none bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all appearance-none cursor-pointer';
+const selectCls = 'flex-none bg-gray-800 border-2 border-gray-700 px-3 py-2 font-condensed text-xs uppercase tracking-wide text-gray-200 focus:outline-none focus:border-amber-500 transition-all appearance-none cursor-pointer';
 
 // Tailwind arbitrary-variant styling for both range slider thumbs
 const rangeCls = [
@@ -59,13 +59,12 @@ const rangeCls = [
   '[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto',
   '[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4',
   '[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-amber-500',
-  '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#030712]',
+  '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#1A1209]',
   '[&::-moz-range-thumb]:cursor-grab',
   '[&::-moz-range-track]:bg-transparent',
 ].join(' ');
 
 // ─── Image cache ──────────────────────────────────────────────────────────────
-// Module-level — survives component unmounts and tab switches within the session.
 const loadedUrls = new Set();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,11 +90,11 @@ function PriceTrend({ current, purchase }) {
   const pct = ((cur - pur) / pur) * 100;
 
   if (Math.abs(pct) < 0.5) {
-    return <span className="text-[10px] text-gray-600 font-medium tabular-nums">—</span>;
+    return <span className="font-condensed text-[10px] text-gray-600 font-medium tabular-nums">—</span>;
   }
   if (pct > 0) {
     return (
-      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 tabular-nums">
+      <span className="flex items-center gap-0.5 font-condensed text-[10px] font-semibold text-emerald-400 tabular-nums">
         <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
         </svg>
@@ -104,7 +103,7 @@ function PriceTrend({ current, purchase }) {
     );
   }
   return (
-    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-400 tabular-nums">
+    <span className="flex items-center gap-0.5 font-condensed text-[10px] font-semibold text-red-400 tabular-nums">
       <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
       </svg>
@@ -114,26 +113,18 @@ function PriceTrend({ current, purchase }) {
 }
 
 // ─── Lazy image with smart placeholder ───────────────────────────────────────
-// Three cases:
-//   1. Session cache hit  (loadedUrls has src) → no overlay at all, instant display
-//   2. HTTP cache hit     (img.complete = true on mount) → useLayoutEffect hides
-//                         the overlay before the first paint — no visible flash
-//   3. Fresh network load → pulse overlay fades out when onLoad fires
 
 function LazyShirtImage({ src, alt, imgClassName, style }) {
   const preloaded = !!src && loadedUrls.has(src);
   const [loaded, setLoaded] = useState(preloaded);
   const imgRef = useRef(null);
 
-  // Runs synchronously before the browser paints, so a browser-cached image
-  // (img.complete === true) collapses the overlay before the user ever sees it.
   useLayoutEffect(() => {
     const img = imgRef.current;
     if (!loaded && img && img.complete && img.naturalWidth > 0) {
       if (src) loadedUrls.add(src);
       setLoaded(true);
     }
-    // Intentionally only on mount — we're reading the initial DOM state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -154,10 +145,6 @@ function LazyShirtImage({ src, alt, imgClassName, style }) {
         style={style}
         onLoad={handleLoad}
       />
-      {/* Only render the overlay for images not already in the session cache.
-          CSS transition fades it out on first network load; for cache hits the
-          useLayoutEffect above sets loaded=true before paint so opacity is 0
-          before the browser renders — no flicker. */}
       {!preloaded && (
         <div
           className="absolute inset-0 bg-gray-800 animate-pulse pointer-events-none transition-opacity duration-500"
@@ -178,7 +165,7 @@ function ShirtCard({ shirt }) {
   return (
     <Link
       to={`/shirts/${shirt.id}`}
-      className="group block rounded-2xl overflow-hidden border border-gray-800/20 hover:border-amber-500/30 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300"
+      className="group block overflow-hidden border-2 border-gray-800 hover:border-amber-500 transition-all duration-300"
     >
       <div className="aspect-square bg-gray-800 relative overflow-hidden">
         {photo ? (
@@ -200,23 +187,23 @@ function ShirtCard({ shirt }) {
       </div>
 
       <div className="px-3.5 py-3.5 space-y-1.5">
-        <h3 className="font-semibold text-gray-100 text-sm leading-snug line-clamp-1 group-hover:text-amber-400 transition-colors duration-200">
+        <h3 className="font-condensed font-bold text-sm uppercase tracking-wider leading-snug line-clamp-1 text-gray-100 group-hover:text-amber-500 transition-colors duration-200">
           {shirt.brand}
         </h3>
-        <p className="text-xs text-gray-500 capitalize">
+        <p className="font-condensed text-[10px] uppercase tracking-wide text-gray-600">
           {shirt.style?.replace('_', ' ')}{shirt.era ? ` · ${shirt.era}` : ''}
         </p>
         <div className="flex items-center justify-between pt-0.5">
-          <span className="text-xs text-gray-600">{shirt.size ?? ''}</span>
+          <span className="font-condensed text-xs text-gray-600">{shirt.size ?? ''}</span>
           <div className="flex items-center gap-1.5">
             <PriceTrend current={shirt.current_value} purchase={shirt.purchase_price} />
-            <span className="text-sm font-bold text-amber-400 tabular-nums">
+            <span className="font-condensed text-sm font-bold text-amber-500 tabular-nums">
               {shirt.current_value ? fmt(shirt.current_value) : ''}
             </span>
           </div>
         </div>
         {checkedLabel && (
-          <p className="text-[10px] text-gray-700 tabular-nums">Checked {checkedLabel}</p>
+          <p className="font-condensed text-[10px] uppercase tracking-wide text-gray-700 tabular-nums">Checked {checkedLabel}</p>
         )}
       </div>
     </Link>
@@ -244,9 +231,9 @@ function WallTile({ shirt }) {
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-250 flex flex-col justify-end p-2">
-        <p className="text-white text-[11px] font-semibold leading-tight line-clamp-1">{shirt.brand}</p>
+        <p className="font-condensed text-white text-[11px] font-bold uppercase tracking-wide leading-tight line-clamp-1">{shirt.brand}</p>
         {pct != null && Math.abs(pct) >= 0.5 && (
-          <span className={`text-[10px] font-bold tabular-nums ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span className={`font-condensed text-[10px] font-bold tabular-nums ${pct > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {pct > 0 ? '↑' : '↓'}{Math.abs(pct).toFixed(0)}%
           </span>
         )}
@@ -262,7 +249,7 @@ function WallTile({ shirt }) {
 
 function GridIcon({ active }) {
   return (
-    <svg className={`w-4 h-4 ${active ? 'text-amber-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+    <svg className={`w-4 h-4 ${active ? 'text-amber-500' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
       <rect x="3" y="3" width="7" height="9" rx="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="14" y="3" width="7" height="9" rx="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="3" y="15" width="7" height="6" rx="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -273,7 +260,7 @@ function GridIcon({ active }) {
 
 function MosaicIcon({ active }) {
   return (
-    <svg className={`w-4 h-4 ${active ? 'text-amber-400' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 24 24">
+    <svg className={`w-4 h-4 ${active ? 'text-amber-500' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 24 24">
       <rect x="2"  y="2"  width="6.5" height="6.5" rx="0.5" />
       <rect x="10" y="2"  width="4"   height="6.5" rx="0.5" />
       <rect x="15.5" y="2" width="6.5" height="6.5" rx="0.5" />
@@ -297,23 +284,20 @@ function ValueRangeFilter({ min, max, globalMax, onMinChange, onMaxChange }) {
   const fmtVal = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
 
   return (
-    <div className="flex-none bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2" style={{ minWidth: '176px' }}>
+    <div className="flex-none bg-gray-800 border-2 border-gray-700 px-3 py-2" style={{ minWidth: '176px' }}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-gray-500 font-medium tracking-wide">Value</span>
-        <span className="text-[10px] text-amber-400/80 tabular-nums font-mono">
+        <span className="font-condensed text-[10px] uppercase tracking-wider text-gray-500 font-medium">Value</span>
+        <span className="font-condensed text-[10px] text-amber-500/80 tabular-nums font-mono">
           {fmtVal(min)} – {fmtVal(max)}
         </span>
       </div>
 
       <div className="relative h-5">
-        {/* Track */}
-        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 rounded-full bg-gray-700 pointer-events-none" />
-        {/* Active fill */}
+        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-gray-700 pointer-events-none" />
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full bg-amber-500 pointer-events-none"
+          className="absolute top-1/2 -translate-y-1/2 h-1 bg-amber-500 pointer-events-none"
           style={{ left: `${minPct}%`, right: `${100 - maxPct}%` }}
         />
-        {/* Min handle */}
         <input
           type="range"
           min={0}
@@ -324,7 +308,6 @@ function ValueRangeFilter({ min, max, globalMax, onMinChange, onMaxChange }) {
           className={rangeCls}
           style={{ zIndex: min > globalMax * 0.9 ? 5 : 3 }}
         />
-        {/* Max handle */}
         <input
           type="range"
           min={0}
@@ -348,7 +331,6 @@ export default function Collection() {
   const [loadError, setLoadError] = useState(null);
   const [view, setView]           = useState('grid');
 
-  // Filters
   const [search, setSearch]               = useState('');
   const [eraFilter, setEraFilter]         = useState('');
   const [styleFilter, setStyleFilter]     = useState('');
@@ -358,7 +340,6 @@ export default function Collection() {
   const [rangeMax, setRangeMax]           = useState(0);
   const [globalMax, setGlobalMax]         = useState(0);
 
-  // Preload front-photo URLs so lazy images appear instantly on scroll
   useEffect(() => {
     shirts.forEach((shirt) => {
       const photo = shirt.photos?.find((p) => p.slot === 'front') ?? shirt.photos?.[0];
@@ -366,7 +347,6 @@ export default function Collection() {
     });
   }, [shirts]);
 
-  // Load all shirts — all filtering/sorting happens client-side
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
@@ -377,7 +357,6 @@ export default function Collection() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      // price_last_checked may not exist yet — fall back without it
       if (error.message?.includes('price_last_checked')) {
         const { data: fallback, error: fbErr } = await supabase
           .from('shirts')
@@ -410,7 +389,6 @@ export default function Collection() {
   useEffect(() => { load(); }, [load]);
   useRegisterPullRefresh(load);
 
-  // ── Client-side filter + sort ───────────────────────────────────────────────
   const filteredShirts = useMemo(() => {
     let result = [...shirts];
 
@@ -456,7 +434,7 @@ export default function Collection() {
       case 'brand_asc':
         result.sort((a, b) => (a.brand ?? '').localeCompare(b.brand ?? ''));
         break;
-      default: // date_desc — data already ordered by created_at desc from DB
+      default:
         break;
     }
 
@@ -479,15 +457,14 @@ export default function Collection() {
     setRangeMax(globalMax);
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-50 tracking-tight">My Collection</h1>
+          <h1 className="font-serif text-3xl font-bold text-gray-50 tracking-tight">My Collection</h1>
           {!loading && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="font-condensed text-xs uppercase tracking-wider text-gray-500 mt-1">
               {hasFilters
                 ? `Showing ${filteredShirts.length} of ${shirts.length} shirt${shirts.length !== 1 ? 's' : ''}`
                 : `${shirts.length} shirt${shirts.length !== 1 ? 's' : ''}`}
@@ -496,17 +473,17 @@ export default function Collection() {
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton onRefresh={load} loading={loading} />
-          <div className="flex items-center gap-0.5 p-1 border border-gray-800/20 rounded-xl">
+          <div className="flex items-center gap-0 border-2 border-gray-800">
             <button
               onClick={() => setView('grid')}
-              className={`p-1.5 rounded-lg transition-all ${view === 'grid' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
+              className={`p-1.5 transition-all ${view === 'grid' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
               aria-label="Grid view"
             >
               <GridIcon active={view === 'grid'} />
             </button>
             <button
               onClick={() => setView('wall')}
-              className={`p-1.5 rounded-lg transition-all ${view === 'wall' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
+              className={`p-1.5 transition-all ${view === 'wall' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
               aria-label="Grail wall view"
             >
               <MosaicIcon active={view === 'wall'} />
@@ -514,14 +491,14 @@ export default function Collection() {
           </div>
           <Link
             to="/shirts/new"
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-semibold rounded-xl transition-all duration-150 shadow-glow-sm hover:shadow-glow"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 border-2 border-amber-500 hover:border-amber-600 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.12em] transition-all duration-150"
           >
             + Add Shirt
           </Link>
         </div>
       </div>
 
-      {/* Filter bar — horizontally scrollable on mobile */}
+      {/* Filter bar */}
       <div
         className="overflow-x-auto pb-1"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
@@ -533,30 +510,25 @@ export default function Collection() {
             placeholder="Search brand…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-none w-40 bg-gray-800 border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all"
+            className="flex-none w-40 bg-gray-800 border-2 border-gray-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500 transition-all"
           />
 
-          {/* Era */}
           <select value={eraFilter} onChange={(e) => setEraFilter(e.target.value)} className={selectCls}>
             {ERAS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Style */}
           <select value={styleFilter} onChange={(e) => setStyleFilter(e.target.value)} className={selectCls}>
             {STYLES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Condition */}
           <select value={conditionFilter} onChange={(e) => setConditionFilter(e.target.value)} className={selectCls}>
             {CONDITIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Sort */}
           <select value={sort} onChange={(e) => setSort(e.target.value)} className={selectCls}>
             {SORTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Value range slider */}
           <ValueRangeFilter
             min={rangeMin}
             max={rangeMax}
@@ -565,11 +537,10 @@ export default function Collection() {
             onMaxChange={setRangeMax}
           />
 
-          {/* Clear filters */}
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex-none flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-amber-400 border border-amber-500/30 rounded-xl hover:bg-amber-500/10 active:bg-amber-500/20 transition-colors whitespace-nowrap"
+              className="flex-none flex items-center gap-1.5 px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 border-2 border-amber-500/40 hover:border-amber-500 hover:bg-amber-500/10 transition-colors whitespace-nowrap"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -582,7 +553,7 @@ export default function Collection() {
 
       {/* Load error */}
       {loadError && (
-        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+        <div className="text-sm text-red-400 bg-red-500/10 border-2 border-red-500/20 px-4 py-3">
           Failed to load collection: {loadError}
         </div>
       )}
@@ -590,20 +561,20 @@ export default function Collection() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
+          <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-500 animate-spin" />
         </div>
       ) : filteredShirts.length === 0 ? (
         <div className="flex flex-col items-center text-center py-24 px-6">
-          <div className="mb-5 opacity-50">
+          <div className="mb-5 opacity-30">
             <TagIcon size={52} />
           </div>
           {shirts.length === 0 ? (
             <>
-              <p className="text-gray-200 font-semibold text-base mb-1.5">Your vault is empty — time to hunt</p>
+              <p className="font-serif text-xl font-bold text-gray-50 mb-1.5">Your vault is empty — time to hunt</p>
               <p className="text-gray-600 text-sm mb-6">Every great collection starts with one shirt.</p>
               <Link
                 to="/shirts/new"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-950 text-sm font-bold rounded-xl transition-all duration-150"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 border-2 border-amber-500 hover:border-amber-600 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.15em] transition-all duration-150"
               >
                 Add your first shirt
               </Link>
@@ -613,7 +584,7 @@ export default function Collection() {
               <p className="text-gray-400 font-medium mb-4">No shirts match your filters</p>
               <button
                 onClick={clearFilters}
-                className="px-5 py-2 border border-amber-500/30 text-amber-400 text-sm font-medium rounded-xl hover:bg-amber-500/10 transition-colors"
+                className="px-5 py-2.5 border-2 border-amber-500/40 text-amber-500 font-condensed text-xs font-semibold uppercase tracking-[0.15em] hover:bg-amber-500/10 transition-colors"
               >
                 Clear filters
               </button>
@@ -621,11 +592,11 @@ export default function Collection() {
           )}
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {filteredShirts.map((shirt) => <ShirtCard key={shirt.id} shirt={shirt} />)}
         </div>
       ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-px bg-gray-800 rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-px bg-gray-800 overflow-hidden">
           {filteredShirts.map((shirt) => <WallTile key={shirt.id} shirt={shirt} />)}
         </div>
       )}
