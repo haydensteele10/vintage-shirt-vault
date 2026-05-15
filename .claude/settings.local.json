@@ -18,7 +18,10 @@
       "Bash(npm start *)",
       "Bash(cd /d C:\\\\Users\\\\hayde\\\\vintage-shirt-vault)",
       "Bash(npm install *)",
-      "PowerShell(npm install *)"
+      "PowerShell(npm install *)",
+      "Skill(ui-ux-pro-max)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"fintech portfolio tracker dark dashboard teal\" --design-system -p \"Tag Charting\")",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"line chart area chart fintech dashboard\" --domain chart -n 3)"
     ]
   }
 }

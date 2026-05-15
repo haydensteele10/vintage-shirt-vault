@@ -4,32 +4,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Slate palette — dark navy / slate-blue / off-white
+        // True OLED black scale
         gray: {
-          50:  '#F8FAFC',
-          100: '#F1F5F9',
-          200: '#E2E8F0',
-          300: '#CBD5E1',
-          400: '#94A3B8',
-          500: '#64748B',
-          600: '#475569',
-          700: '#334155',
-          800: '#1E293B',
-          900: '#0F172A',
-          950: '#0B1120',
+          50:  '#F5F5F5',
+          100: '#E5E5E5',
+          200: '#CCCCCC',
+          300: '#AAAAAA',
+          400: '#888888',
+          500: '#666666',
+          600: '#444444',
+          700: '#2A2A2A',
+          800: '#1A1A1A',
+          900: '#0D0D0D',
+          950: '#0A0A0A',
         },
-        // Blue primary accent — replaces rust/amber
+        // Teal primary accent — replaces blue
         amber: {
-          50:  '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#2563EB',
-          600: '#1D4ED8',
-          700: '#1E40AF',
-          800: '#1E3A8A',
-          900: '#1E3375',
+          50:  '#E0FBF6',
+          100: '#B3F5EC',
+          200: '#80F0E0',
+          300: '#4EEBD0',
+          400: '#00E8BB',
+          500: '#00D4AA',
+          600: '#00B894',
+          700: '#009B7D',
+          800: '#007D64',
+          900: '#006050',
         },
       },
       fontFamily: {

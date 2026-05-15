@@ -32,9 +32,9 @@
 }
 
 :root {
-  --profile-header-gradient: linear-gradient(to bottom right, rgba(37,99,235,0.25), #0F172A 50%, #0F172A);
-  --foreground: #F8FAFC;
-  --background: #0F172A;
+  --profile-header-gradient: linear-gradient(to bottom right, rgba(0,212,170,0.22), #0A0A0A 50%, #0A0A0A);
+  --foreground: #F5F5F5;
+  --background: #0A0A0A;
 }
 
 /* ─── Light Mode ──────────────────────────────────────────────────────────────
@@ -136,13 +136,13 @@ html.light-mode .hover\:text-gray-400:hover { color: #475569 !important; }
 html.light-mode .placeholder-gray-600::placeholder { color: #94A3B8 !important; }
 html.light-mode .placeholder-gray-700::placeholder { color: #CBD5E1 !important; }
 
-/* ── Blue / amber accent (darkened for contrast on light bg) ──────────────── */
-html.light-mode .text-amber-500  { color: #1D4ED8 !important; }
-html.light-mode .text-amber-400  { color: #2563EB !important; }
-html.light-mode .text-amber-300  { color: #3B82F6 !important; }
-html.light-mode .border-t-amber-400 { border-top-color: #2563EB !important; }
-html.light-mode .hover\:text-amber-500:hover { color: #1D4ED8 !important; }
-html.light-mode .hover\:text-amber-400:hover { color: #1D4ED8 !important; }
+/* ── Teal accent (darkened for contrast on light bg) ──────────────────────── */
+html.light-mode .text-amber-500  { color: #007A63 !important; }
+html.light-mode .text-amber-400  { color: #009B7D !important; }
+html.light-mode .text-amber-300  { color: #00B894 !important; }
+html.light-mode .border-t-amber-400 { border-top-color: #009B7D !important; }
+html.light-mode .hover\:text-amber-500:hover { color: #007A63 !important; }
+html.light-mode .hover\:text-amber-400:hover { color: #007A63 !important; }
 
 /* ── Ring colors ─────────────────────────────────────────────────────────── */
 html.light-mode .ring-gray-900   { --tw-ring-color: rgba(241,245,249,0.9); }
@@ -150,7 +150,7 @@ html.light-mode .ring-gray-800   { --tw-ring-color: rgba(226,232,240,0.8); }
 html.light-mode .ring-gray-950   { --tw-ring-color: rgba(248,250,252,0.95); }
 
 /* ── Gradient overrides ──────────────────────────────────────────────────── */
-html.light-mode .from-amber-900\/40 { --tw-gradient-from: rgba(37,99,235,0.08); }
+html.light-mode .from-amber-900\/40 { --tw-gradient-from: rgba(0,212,170,0.08); }
 
 /* ── Date input color-scheme fix ─────────────────────────────────────────── */
 html.light-mode .\[color-scheme\:dark\] { color-scheme: light; }
@@ -158,18 +158,18 @@ html.light-mode .\[color-scheme\:dark\] { color-scheme: light; }
 /* ── Navbar / bottom nav thick borders ───────────────────────────────────── */
 html.light-mode .border-b-2.border-gray-800,
 html.light-mode .border-t-2.border-gray-800 {
-  border-color: #CBD5E1 !important;
+  border-color: #D1D5DB !important;
 }
 
-/* ── Blue accent bg/border variants ──────────────────────────────────────── */
-html.light-mode .text-amber-400\/50    { color: rgba(37,99,235,0.55) !important; }
-html.light-mode .bg-amber-500\/10      { background-color: rgba(37,99,235,0.09) !important; }
-html.light-mode .bg-amber-500\/15      { background-color: rgba(37,99,235,0.12) !important; }
-html.light-mode .border-amber-500\/40  { border-color: rgba(37,99,235,0.40) !important; }
-html.light-mode .border-amber-500\/30  { border-color: rgba(37,99,235,0.32) !important; }
-html.light-mode .border-amber-500\/25  { border-color: rgba(37,99,235,0.28) !important; }
-html.light-mode .border-amber-500\/20  { border-color: rgba(37,99,235,0.22) !important; }
-html.light-mode .hover\:bg-amber-500\/10:hover { background-color: rgba(37,99,235,0.09) !important; }
+/* ── Teal accent bg/border variants ──────────────────────────────────────── */
+html.light-mode .text-amber-400\/50    { color: rgba(0,155,125,0.55) !important; }
+html.light-mode .bg-amber-500\/10      { background-color: rgba(0,212,170,0.09) !important; }
+html.light-mode .bg-amber-500\/15      { background-color: rgba(0,212,170,0.12) !important; }
+html.light-mode .border-amber-500\/40  { border-color: rgba(0,212,170,0.40) !important; }
+html.light-mode .border-amber-500\/30  { border-color: rgba(0,212,170,0.32) !important; }
+html.light-mode .border-amber-500\/25  { border-color: rgba(0,212,170,0.28) !important; }
+html.light-mode .border-amber-500\/20  { border-color: rgba(0,212,170,0.22) !important; }
+html.light-mode .hover\:bg-amber-500\/10:hover { background-color: rgba(0,212,170,0.09) !important; }
 
 /* ── AI / violet accents ─────────────────────────────────────────────────── */
 html.light-mode .text-violet-300       { color: #6d28d9 !important; }
@@ -185,7 +185,8 @@ html.light-mode .text-orange-300\/90   { color: rgba(234,88,12,0.92) !important;
 
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
 html.light-mode .ring-gray-800\/60 { --tw-ring-color: rgba(226,232,240,0.65); }
-html.light-mode .border-gray-800.border-t-amber-400 {
+html.light-mode .border-gray-800.border-t-amber-400,
+html.light-mode .border-gray-800.border-t-amber-500 {
   border-color: #E2E8F0 !important;
-  border-top-color: #2563EB !important;
+  border-top-color: #009B7D !important;
 }
