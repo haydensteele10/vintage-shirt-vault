@@ -91,7 +91,7 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE).then((c) => c.put(request, res.clone()));
           return res;
         })
-        .catch(() => caches.match('/'))
+        .catch(() => caches.match('/').then((r) => r ?? new Response('', { status: 503 })))
     );
     return;
   }
@@ -103,8 +103,8 @@ self.addEventListener('fetch', (e) => {
         const fetched = fetch(request).then((res) => {
           if (res.ok) c.put(request, res.clone());
           return res;
-        }).catch(() => cached);
-        return cached || fetched;
+        }).catch(() => cached ?? new Response('', { status: 503 }));
+        return cached ?? fetched;
       })
     )
   );

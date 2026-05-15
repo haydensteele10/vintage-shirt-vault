@@ -144,14 +144,16 @@ function NotificationBell({ user }) {
         fetchProfiles([...new Set(rows.map((n) => n.from_user_id).filter(Boolean))]);
       });
 
-    const channel = supabase
-      .channel(`notifs_${user.id}`)
+    const realtimeChannel = supabase.channel(`notifs_${user.id}`);
+    if (!realtimeChannel) return;
+
+    const channel = realtimeChannel
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         (payload) => {
           setNotifs((prev) => [payload.new, ...prev].slice(0, 20));
-          if (payload.new.from_user_id) fetchProfiles([payload.new.from_user_id]);
+          if (payload.new?.from_user_id) fetchProfiles([payload.new.from_user_id]);
         },
       )
       .subscribe();
@@ -245,8 +247,8 @@ function NotificationBell({ user }) {
 // ─── Main navbar ──────────────────────────────────────────────────────────────
 
 export default function Navbar() {
-  const { isDark, toggle } = useTheme();
-  const { user }           = useAuth();
+  const { isDark, toggle } = useTheme() ?? {};
+  const { user }           = useAuth() ?? {};
   const location           = useLocation();
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Tag Charting';
