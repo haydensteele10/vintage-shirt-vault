@@ -1,7 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TagIcon } from '../components/Logo';
-import { GlassButton } from '../components/ui/apple-tahoe-liquid-glass-button';
 
 export default function Landing() {
   const { session } = useAuth();
@@ -12,7 +11,7 @@ export default function Landing() {
     <div className="min-h-screen bg-gray-950 flex flex-col">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-6 sm:px-10 py-5 border-b-2 border-gray-800">
+      <header className="flex items-center justify-between px-6 sm:px-10 py-5">
         <div className="flex items-center gap-2.5">
           <TagIcon size={24} />
           <span className="font-condensed font-semibold text-sm uppercase tracking-[0.2em] text-gray-50">
@@ -29,7 +28,7 @@ export default function Landing() {
           <Link
             to="/login"
             state={{ mode: 'signup' }}
-            className="px-5 py-2 bg-orange-500 border-2 border-orange-500 text-white font-condensed font-bold text-xs uppercase tracking-[0.15em] hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 cursor-pointer"
+            className="px-5 py-2 bg-amber-500 text-gray-950 font-condensed font-bold text-xs uppercase tracking-[0.15em] rounded-xl hover:bg-amber-400 transition-all duration-150 cursor-pointer"
           >
             Sign up
           </Link>
@@ -46,41 +45,39 @@ export default function Landing() {
             Catalog your vintage tees, pull live eBay comps, and watch your portfolio grow.
           </p>
           <div className="flex flex-col sm:flex-row items-start gap-3 ml-1">
-            <GlassButton
-              size="lg"
+            <button
               onClick={() => navigate('/login', { state: { mode: 'signup' } })}
+              className="px-8 py-4 bg-amber-500 text-gray-950 font-bold rounded-2xl hover:bg-amber-400 transition-all duration-150 cursor-pointer text-sm"
             >
               Start tracking free
-            </GlassButton>
-            <GlassButton
-              size="lg"
+            </button>
+            <button
               onClick={() => navigate('/login')}
+              className="px-8 py-4 bg-gray-700 text-gray-300 font-bold rounded-2xl hover:bg-gray-600 transition-all duration-150 cursor-pointer text-sm"
             >
               Sign in
-            </GlassButton>
+            </button>
           </div>
         </div>
 
-        {/* Feature strip — thick border dividers, no cards */}
-        <div className="mt-24 sm:mt-32 border-t-2 border-gray-800">
-          <div className="grid grid-cols-1 sm:grid-cols-3">
-            {[
-              { num: '01', title: 'AI Recognition',  desc: 'Snap a photo — get instant brand, era, and style ID.' },
-              { num: '02', title: 'Live eBay Comps', desc: 'Real-time pricing from active and sold eBay listings.' },
-              { num: '03', title: 'Portfolio Value', desc: 'Track your gains and build a record of your collection.' },
-            ].map((f) => (
-              <div key={f.num} className="border-b-2 sm:border-b-0 sm:border-r-2 border-gray-800 last:border-0 px-6 py-8">
-                <span className="font-condensed text-xs font-semibold text-amber-500 uppercase tracking-[0.2em] block mb-3">{f.num}</span>
-                <p className="font-condensed font-bold text-sm uppercase tracking-wider text-gray-100 mb-2">{f.title}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+        {/* Feature cards */}
+        <div className="mt-24 sm:mt-32 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { num: '01', title: 'AI Recognition',  desc: 'Snap a photo — get instant brand, era, and style ID.' },
+            { num: '02', title: 'Live eBay Comps', desc: 'Real-time pricing from active and sold eBay listings.' },
+            { num: '03', title: 'Portfolio Value', desc: 'Track your gains and build a record of your collection.' },
+          ].map((f) => (
+            <div key={f.num} className="bg-gray-800 rounded-2xl p-6">
+              <span className="font-condensed text-xs font-semibold text-amber-500 uppercase tracking-[0.2em] block mb-3">{f.num}</span>
+              <p className="font-condensed font-bold text-sm uppercase tracking-wider text-gray-50 mb-2">{f.title}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
         </div>
       </main>
 
-      <footer className="py-5 px-6 sm:px-10 border-t-2 border-gray-800">
-        <p className="font-condensed text-xs uppercase tracking-[0.2em] text-gray-700">© 2025 Tag Charting</p>
+      <footer className="py-5 px-6 sm:px-10">
+        <p className="font-condensed text-xs uppercase tracking-[0.2em] text-gray-600">© 2025 Tag Charting</p>
       </footer>
     </div>
   );

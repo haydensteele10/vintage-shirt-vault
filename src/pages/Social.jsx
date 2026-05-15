@@ -86,9 +86,9 @@ function ActivityItem({ item, currentUserId }) {
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-200 leading-snug">
-            <span className="font-semibold text-gray-100">{actor}</span>
+            <span className="font-semibold text-amber-500">{actor}</span>
             {' added '}
-            {brand ? <span className="font-semibold text-amber-400">{brand}</span> : 'a shirt'}
+            {brand ? <span className="font-semibold text-gray-50">{brand}</span> : 'a shirt'}
             {' to their collection'}
           </p>
           {val != null && (
@@ -99,7 +99,7 @@ function ActivityItem({ item, currentUserId }) {
               </span>
             </p>
           )}
-          <p className="text-[11px] text-gray-700 mt-1">{timeAgo(item.created_at)}</p>
+          <p className="text-[11px] text-gray-500 mt-1">{timeAgo(item.created_at)}</p>
         </div>
         {item.shirt_id && <ShirtThumb shirtId={item.shirt_id} shirt={item.shirt} brand={brand} />}
       </div>
@@ -113,9 +113,9 @@ function ActivityItem({ item, currentUserId }) {
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-200 leading-snug">
-            <span className="font-semibold text-gray-100">{actor}</span>
+            <span className="font-semibold text-amber-500">{actor}</span>
             {' updated '}
-            {brand ? <span className="font-semibold text-amber-400">{brand}</span> : 'a shirt'}
+            {brand ? <span className="font-semibold text-gray-50">{brand}</span> : 'a shirt'}
             {' value'}
           </p>
           {oldVal != null && newVal != null && (
@@ -126,7 +126,7 @@ function ActivityItem({ item, currentUserId }) {
               <span className="font-bold">{up ? '↑' : '↓'}{pct != null ? `${pct}%` : ''}</span>
             </p>
           )}
-          <p className="text-[11px] text-gray-700 mt-1">{timeAgo(item.created_at)}</p>
+          <p className="text-[11px] text-gray-500 mt-1">{timeAgo(item.created_at)}</p>
         </div>
         {item.shirt_id && <ShirtThumb shirtId={item.shirt_id} shirt={item.shirt} brand={brand} />}
       </div>
@@ -135,23 +135,23 @@ function ActivityItem({ item, currentUserId }) {
     body = (
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-200 leading-snug">
-          <span className="font-semibold text-gray-100">{actor}</span>
+          <span className="font-semibold text-amber-500">{actor}</span>
           {' started following '}
-          <span className="font-semibold text-amber-400">
+          <span className="font-semibold text-gray-50">
             @{item.metadata?.friend_username ?? 'someone'}
           </span>
         </p>
-        <p className="text-[11px] text-gray-700 mt-1">{timeAgo(item.created_at)}</p>
+        <p className="text-[11px] text-gray-500 mt-1">{timeAgo(item.created_at)}</p>
       </div>
     );
   } else if (item.type === 'showcase_updated') {
     body = (
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-200 leading-snug">
-          <span className="font-semibold text-gray-100">{actor}</span>
+          <span className="font-semibold text-amber-500">{actor}</span>
           {' updated their showcase'}
         </p>
-        <p className="text-[11px] text-gray-700 mt-1">{timeAgo(item.created_at)}</p>
+        <p className="text-[11px] text-gray-500 mt-1">{timeAgo(item.created_at)}</p>
       </div>
     );
   }
@@ -159,7 +159,7 @@ function ActivityItem({ item, currentUserId }) {
   if (!body) return null;
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3.5 border-b border-gray-800/40 last:border-0">
+    <div className="flex items-start gap-3 bg-gray-800 rounded-2xl p-4 mb-3">
       <Avatar profile={item.profile} />
       {body}
     </div>
@@ -243,12 +243,12 @@ function FriendSearch({ user, profile, followingIds, onFollow }) {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-800/20 overflow-hidden mb-5">
+    <div className="bg-gray-800 rounded-2xl overflow-hidden mb-5">
       <div className="px-4 pt-4 pb-3">
-        <h2 className="text-sm font-semibold text-gray-100 mb-3">Find Collectors</h2>
+        <h2 className="text-sm font-bold text-gray-50 mb-3">Find Collectors</h2>
 
         {/* Search input */}
-        <div className="flex items-center bg-gray-800 border border-gray-700/80 rounded-xl overflow-hidden">
+        <div className="flex items-center bg-gray-700 rounded-xl overflow-hidden">
           <svg className="w-4 h-4 text-gray-600 ml-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -273,7 +273,7 @@ function FriendSearch({ user, profile, followingIds, onFollow }) {
 
       {/* Search results */}
       {results.length > 0 && (
-        <ul className="border-t border-gray-800/60 divide-y divide-gray-800/30">
+        <ul className="border-t border-gray-700/60 divide-y divide-gray-700/30">
           {results.map((person) => {
             const initials    = (person.username ?? 'u').slice(0, 2).toUpperCase();
             const isFollowing = localFollowing.has(person.id);
@@ -289,13 +289,13 @@ function FriendSearch({ user, profile, followingIds, onFollow }) {
                   @{person.username}
                 </span>
                 {isFollowing ? (
-                  <span className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-700/60 rounded-lg">
+                  <span className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-700 rounded-lg">
                     Following
                   </span>
                 ) : (
                   <button
                     onClick={() => handleFollow(person)}
-                    className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition-all"
+                    className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-gray-950 bg-amber-500 rounded-lg hover:bg-amber-400 transition-all"
                   >
                     Follow
                   </button>
@@ -308,7 +308,7 @@ function FriendSearch({ user, profile, followingIds, onFollow }) {
 
       {/* No results state */}
       {!searching && query.trim() && results.length === 0 && (
-        <div className="border-t border-gray-800/60 px-4 py-5 text-center">
+        <div className="border-t border-gray-700/60 px-4 py-5 text-center">
           <p className="text-sm text-gray-600">No collectors found for <span className="text-gray-500">@{query.trim()}</span></p>
         </div>
       )}
@@ -427,7 +427,7 @@ export default function Social() {
 
       {/* ── Activity feed ───────────────────────────────────────────────────── */}
       <div className="mb-3">
-        <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest px-1">Activity Feed</p>
+        <p className="text-base font-bold text-gray-50 px-1">Activity Feed</p>
       </div>
 
       {loading ? (
@@ -435,7 +435,7 @@ export default function Social() {
           <div className="w-6 h-6 rounded-full border-2 border-gray-800 border-t-amber-400 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-gray-800/20 px-6 py-14 text-center flex flex-col items-center gap-4">
+        <div className="bg-gray-800 rounded-2xl px-6 py-14 text-center flex flex-col items-center gap-4">
           <div className="opacity-50">
             <TagIcon size={48} />
           </div>
@@ -450,10 +450,10 @@ export default function Social() {
         <div className="space-y-5">
           {sortedGroups.map((group) => (
             <div key={group}>
-              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest px-1 mb-2">
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-1 mb-2">
                 {group}
               </p>
-              <div className="rounded-2xl border border-gray-800/20 overflow-hidden">
+              <div className="space-y-0">
                 {grouped[group].map((item) => (
                   <ActivityItem key={item.id} item={item} currentUserId={user.id} />
                 ))}
@@ -464,7 +464,7 @@ export default function Social() {
           <button
             onClick={() => loadFeed(true)}
             disabled={refreshing}
-            className="w-full py-3 text-xs font-semibold text-gray-600 hover:text-gray-400 border border-gray-800/60 rounded-2xl transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full py-3 text-xs font-semibold text-gray-500 hover:text-gray-300 bg-gray-800 rounded-2xl transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {refreshing ? (
               <>

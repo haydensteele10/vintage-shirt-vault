@@ -71,7 +71,7 @@ function SearchResultCard({ listing }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-800/20 overflow-hidden hover:border-amber-500/30 transition-colors group flex flex-col">
+    <div className="bg-gray-800 rounded-2xl overflow-hidden hover:ring-1 hover:ring-amber-500/40 transition-all group flex flex-col">
       <a href={listing.url} target="_blank" rel="noopener noreferrer" className="flex-1">
         <div className="aspect-square bg-gray-800 overflow-hidden">
           {listing.image && !imgError ? (
@@ -93,7 +93,7 @@ function SearchResultCard({ listing }) {
           <p className="text-[11px] text-gray-400 leading-snug line-clamp-2 mb-1 group-hover:text-gray-300 transition-colors">
             {listing.title}
           </p>
-          <p className="text-sm font-bold text-amber-400 tabular-nums">
+          <p className="text-sm font-bold text-amber-500 tabular-nums">
             ${listing.price.toFixed(2)}
           </p>
         </div>
@@ -102,22 +102,22 @@ function SearchResultCard({ listing }) {
         <button
           onClick={handleAdd}
           disabled={parsing}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 active:bg-amber-500/30 transition-colors disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-amber-500 text-gray-950 font-bold text-xs hover:bg-amber-400 transition-colors disabled:opacity-60"
         >
           {parsing ? (
             <>
-              <svg className="w-3 h-3 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Analyzing…</span>
+              <span className="text-[10px] font-bold tracking-wide">Analyzing…</span>
             </>
           ) : (
             <>
-              <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span className="text-[10px] font-semibold text-amber-400 tracking-wide">Add to Collection</span>
+              <span className="text-[10px] font-bold tracking-wide">Add to Collection</span>
             </>
           )}
         </button>
@@ -132,13 +132,13 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-gray-800/20 overflow-hidden">
-          <div className="aspect-square bg-gray-800 animate-pulse" />
+        <div key={i} className="bg-gray-800 rounded-2xl overflow-hidden">
+          <div className="aspect-square bg-gray-700 animate-pulse" />
           <div className="p-3 space-y-2">
-            <div className="h-3 bg-gray-800 rounded animate-pulse" />
-            <div className="h-3 w-2/3 bg-gray-800 rounded animate-pulse" />
-            <div className="h-3 w-1/3 bg-gray-800 rounded animate-pulse" />
-            <div className="h-8 bg-gray-800/60 rounded-lg animate-pulse mt-1" />
+            <div className="h-3 bg-gray-700 rounded animate-pulse" />
+            <div className="h-3 w-2/3 bg-gray-700 rounded animate-pulse" />
+            <div className="h-3 w-1/3 bg-gray-700 rounded animate-pulse" />
+            <div className="h-8 bg-gray-700/60 rounded-lg animate-pulse mt-1" />
           </div>
         </div>
       ))}
@@ -166,7 +166,7 @@ function EmptyState({ onSuggest }) {
           <button
             key={s}
             onClick={() => onSuggest(s)}
-            className="px-3 py-1.5 rounded-full border border-gray-800/20 text-xs text-gray-500 hover:text-amber-400 hover:border-amber-500/30 transition-colors"
+            className="px-3 py-1.5 bg-gray-800 rounded-full text-xs text-gray-500 hover:text-amber-500 hover:bg-gray-700 transition-colors"
           >
             {s}
           </button>
@@ -237,7 +237,7 @@ export default function Search() {
 
       {/* Search bar */}
       <form onSubmit={handleSubmit} className="mb-6">
-        <div className="flex items-center gap-3 border border-gray-700/40 hover:border-gray-600/60 focus-within:border-amber-500/50 rounded-2xl px-4 py-3.5 transition-all bg-gray-800/40 focus-within:bg-gray-800/60">
+        <div className="bg-gray-800 rounded-2xl px-4 py-3 flex items-center gap-3 focus-within:ring-1 focus-within:ring-amber-500/50 transition-all">
           {loading ? (
             <svg className="w-5 h-5 text-gray-500 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -253,7 +253,7 @@ export default function Search() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Grateful Dead 1995, vintage NASCAR tee…"
-            className="flex-1 bg-transparent text-sm text-gray-100 placeholder-gray-600 focus:outline-none"
+            className="flex-1 bg-transparent text-gray-50 placeholder-gray-600 focus:outline-none text-sm"
             autoFocus
           />
           {query && (

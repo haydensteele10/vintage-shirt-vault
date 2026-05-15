@@ -45,7 +45,7 @@ const SORTS = [
 
 const DEFAULT_SORT = 'date_desc';
 
-const selectCls = 'flex-none bg-gray-800 border-2 border-gray-700 px-3 py-2 font-condensed text-xs uppercase tracking-wide text-gray-200 focus:outline-none focus:border-amber-500 transition-all appearance-none cursor-pointer';
+const selectCls = 'flex-none bg-gray-700 text-gray-300 rounded-xl border-0 px-3 py-2 font-condensed text-xs uppercase tracking-wide focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all appearance-none cursor-pointer';
 
 // Tailwind arbitrary-variant styling for both range slider thumbs
 const rangeCls = [
@@ -165,7 +165,7 @@ function ShirtCard({ shirt }) {
   return (
     <Link
       to={`/shirts/${shirt.id}`}
-      className="group block overflow-hidden border-2 border-gray-800 hover:border-amber-500 transition-all duration-300"
+      className="group block overflow-hidden bg-gray-800 rounded-2xl hover:ring-1 hover:ring-amber-500/50 transition-all duration-300"
     >
       <div className="aspect-square bg-gray-800 relative overflow-hidden">
         {photo ? (
@@ -288,7 +288,7 @@ function ValueRangeFilter({ min, max, globalMax, onMinChange, onMaxChange }) {
   const fmtVal = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
 
   return (
-    <div className="flex-none bg-gray-800 border-2 border-gray-700 px-3 py-2" style={{ minWidth: '176px' }}>
+    <div className="flex-none bg-gray-700 rounded-xl px-3 py-2" style={{ minWidth: '176px' }}>
       <div className="flex items-center justify-between mb-2">
         <span className="font-condensed text-[10px] uppercase tracking-wider text-gray-500 font-medium">Value</span>
         <span className="font-condensed text-[10px] text-amber-500/80 tabular-nums font-mono">
@@ -477,17 +477,17 @@ export default function Collection() {
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton onRefresh={load} loading={loading} />
-          <div className="flex items-center gap-0 border-2 border-gray-800">
+          <div className="flex items-center gap-0 bg-gray-800 rounded-xl overflow-hidden">
             <button
               onClick={() => setView('grid')}
-              className={`p-1.5 transition-all ${view === 'grid' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
+              className={`p-1.5 transition-all ${view === 'grid' ? 'bg-gray-700' : 'hover:bg-gray-700/50'}`}
               aria-label="Grid view"
             >
               <GridIcon active={view === 'grid'} />
             </button>
             <button
               onClick={() => setView('wall')}
-              className={`p-1.5 transition-all ${view === 'wall' ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
+              className={`p-1.5 transition-all ${view === 'wall' ? 'bg-gray-700' : 'hover:bg-gray-700/50'}`}
               aria-label="Grail wall view"
             >
               <MosaicIcon active={view === 'wall'} />
@@ -495,7 +495,7 @@ export default function Collection() {
           </div>
           <Link
             to="/shirts/new"
-            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 border-2 border-orange-500 hover:border-orange-600 text-white font-condensed text-xs font-bold uppercase tracking-[0.12em] transition-all duration-150 cursor-pointer"
+            className="px-4 py-2 bg-amber-500 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.12em] rounded-xl hover:bg-amber-400 transition-all duration-150 cursor-pointer"
           >
             + Add Shirt
           </Link>
@@ -514,7 +514,7 @@ export default function Collection() {
             placeholder="Search brand…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-none w-40 bg-gray-800 border-2 border-gray-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500 transition-all"
+            className="flex-none w-40 bg-gray-700 rounded-xl border-0 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
           />
 
           <select value={eraFilter} onChange={(e) => setEraFilter(e.target.value)} className={selectCls}>
@@ -544,7 +544,7 @@ export default function Collection() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex-none flex items-center gap-1.5 px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 border-2 border-amber-500/40 hover:border-amber-500 hover:bg-amber-500/10 transition-colors whitespace-nowrap"
+              className="flex-none flex items-center gap-1.5 px-3 py-2 font-condensed text-xs font-semibold uppercase tracking-wider text-amber-500 bg-gray-700 rounded-xl hover:bg-amber-500/10 transition-colors whitespace-nowrap"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -557,7 +557,7 @@ export default function Collection() {
 
       {/* Load error */}
       {loadError && (
-        <div className="text-sm text-red-400 bg-red-500/10 border-2 border-red-500/20 px-4 py-3">
+        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
           Failed to load collection: {loadError}
         </div>
       )}
@@ -578,7 +578,7 @@ export default function Collection() {
               <p className="text-gray-600 text-sm mb-6">Every great collection starts with one shirt.</p>
               <Link
                 to="/shirts/new"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 border-2 border-orange-500 hover:border-orange-600 text-white font-condensed text-xs font-bold uppercase tracking-[0.15em] transition-all duration-150 cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-gray-950 font-condensed text-xs font-bold uppercase tracking-[0.15em] rounded-2xl hover:bg-amber-400 transition-all duration-150 cursor-pointer"
               >
                 Add your first shirt
               </Link>
@@ -588,7 +588,7 @@ export default function Collection() {
               <p className="text-gray-400 font-medium mb-4">No shirts match your filters</p>
               <button
                 onClick={clearFilters}
-                className="px-5 py-2.5 border-2 border-amber-500/40 text-amber-500 font-condensed text-xs font-semibold uppercase tracking-[0.15em] hover:bg-amber-500/10 transition-colors"
+                className="px-5 py-2.5 bg-gray-700 text-amber-500 font-condensed text-xs font-semibold uppercase tracking-[0.15em] rounded-xl hover:bg-amber-500/10 transition-colors"
               >
                 Clear filters
               </button>

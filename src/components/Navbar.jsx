@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { GlassButton } from './ui/apple-tahoe-liquid-glass-button';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { TagIcon } from './Logo';
 import { useTheme } from '../context/ThemeContext';
-import { useSheet } from '../context/SheetContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -15,6 +13,16 @@ const NAV_LINKS = [
   { to: '/social',     label: 'Social',     end: false },
   { to: '/profile',    label: 'Profile',    end: false },
 ];
+
+const PAGE_TITLES = {
+  '/dashboard':  'Dashboard',
+  '/collection': 'Collection',
+  '/search':     'Search',
+  '/discover':   'Discover',
+  '/social':     'Social',
+  '/profile':    'Profile',
+  '/activity':   'Activity',
+};
 
 const activeCls   = 'text-amber-500 border-b-2 border-amber-500';
 const inactiveCls = 'text-gray-500 hover:text-gray-50 border-b-2 border-transparent';
@@ -47,6 +55,15 @@ function BellIcon() {
   );
 }
 
+function CogIcon() {
+  return (
+    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
 // ─── Notification helpers ─────────────────────────────────────────────────────
 
 function timeAgo(dateStr) {
@@ -61,7 +78,7 @@ function NotifAvatar({ profile, type }) {
   if (profile) {
     const initials = (profile.username ?? 'u').slice(0, 2).toUpperCase();
     return (
-      <div className="w-9 h-9 bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {profile.avatar_url
           ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
           : <span className="text-xs font-bold text-amber-500">{initials}</span>
@@ -71,7 +88,7 @@ function NotifAvatar({ profile, type }) {
   }
   if (type === 'price_change') {
     return (
-      <div className="w-9 h-9 bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
+      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
         <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
         </svg>
@@ -79,7 +96,7 @@ function NotifAvatar({ profile, type }) {
     );
   }
   return (
-    <div className="w-9 h-9 bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
+    <div className="w-9 h-9 rounded-xl bg-gray-800 border border-gray-700/60 flex items-center justify-center flex-shrink-0">
       <BellIcon />
     </div>
   );
@@ -170,20 +187,20 @@ function NotificationBell({ user }) {
       <button
         onClick={handleToggle}
         aria-label="Notifications"
-        className={`relative p-2 transition-all duration-150 ${inactiveCls}`}
+        className="relative p-2 text-gray-500 hover:text-gray-50 transition-colors duration-150 cursor-pointer"
       >
         <BellIcon />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none pointer-events-none">
+          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none pointer-events-none">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-0 w-80 bg-gray-900 border-2 border-gray-800 z-[100] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b-2 border-gray-800">
-            <p className="font-condensed text-xs font-bold uppercase tracking-[0.15em] text-gray-100">Notifications</p>
+        <div className="absolute right-0 top-full mt-2 w-80 bg-gray-800 rounded-2xl border border-gray-700 z-[100] overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+            <p className="font-condensed text-xs font-bold uppercase tracking-[0.15em] text-gray-50">Notifications</p>
             {notifs.length > 0 && unread === 0 && (
               <span className="font-condensed text-[10px] uppercase tracking-wider text-gray-600">All caught up</span>
             )}
@@ -191,10 +208,10 @@ function NotificationBell({ user }) {
 
           {notifs.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-sm text-gray-600">No notifications yet</p>
+              <p className="text-sm text-gray-500">No notifications yet</p>
             </div>
           ) : (
-            <ul className="max-h-[360px] overflow-y-auto divide-y divide-gray-800/30">
+            <ul className="max-h-[360px] overflow-y-auto divide-y divide-gray-700/50">
               {notifs.map((notif) => (
                 <li
                   key={notif.id}
@@ -210,10 +227,10 @@ function NotificationBell({ user }) {
                     <p className={`text-xs leading-snug ${notif.read ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
                       {notif.message}
                     </p>
-                    <p className="font-condensed text-[10px] uppercase tracking-wider text-gray-600 mt-1">{timeAgo(notif.created_at)}</p>
+                    <p className="font-condensed text-[10px] uppercase tracking-wider text-gray-500 mt-1">{timeAgo(notif.created_at)}</p>
                   </div>
                   {!notif.read && (
-                    <span className="w-2 h-2 bg-amber-500 flex-shrink-0 mt-1.5" />
+                    <span className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0 mt-1.5" />
                   )}
                 </li>
               ))}
@@ -229,51 +246,68 @@ function NotificationBell({ user }) {
 
 export default function Navbar() {
   const { isDark, toggle } = useTheme();
-  const { openAddShirt }   = useSheet();
   const { user }           = useAuth();
+  const location           = useLocation();
+
+  const pageTitle = PAGE_TITLES[location.pathname] ?? 'Tag Charting';
 
   return (
     <header
-      className="sticky top-0 z-50 bg-gray-950 border-b-2 border-gray-800"
+      className="sticky top-0 z-50 bg-gray-950"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-15 py-3">
-        <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
+      {/* ── Mobile layout (< sm) ─────────────────────────────────────────── */}
+      <div className="sm:hidden flex items-center justify-between h-14 px-4">
+        {/* Left — settings/profile icon */}
+        <Link
+          to="/profile"
+          aria-label="Profile & Settings"
+          className="p-2 text-gray-500 hover:text-gray-50 transition-colors duration-150 cursor-pointer"
+        >
+          <CogIcon />
+        </Link>
+
+        {/* Center — page title */}
+        <span className="font-sans font-bold text-base text-gray-50">{pageTitle}</span>
+
+        {/* Right — notification bell */}
+        <NotificationBell user={user} />
+      </div>
+
+      {/* ── Desktop layout (sm+) ─────────────────────────────────────────── */}
+      <div className="hidden sm:flex items-center justify-between h-14 px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Left — logo */}
+        <NavLink to="/dashboard" className="flex items-center gap-2.5 group flex-shrink-0">
           <TagIcon size={24} />
           <span className="font-condensed font-semibold text-sm uppercase tracking-[0.2em] text-gray-50 group-hover:text-amber-500 transition-colors">
             Tag Charting
           </span>
         </NavLink>
 
-        <div className="flex items-center gap-1">
-          <NotificationBell user={user} />
-
-          <nav className="hidden sm:flex items-center gap-0">
-            {NAV_LINKS.map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) => `${linkCls} ${isActive ? activeCls : inactiveCls}`}
-              >
-                {label}
-              </NavLink>
-            ))}
-
-            {/* Add Shirt */}
-            <GlassButton size="sm" onClick={openAddShirt} className="ml-2">
-              + Add Shirt
-            </GlassButton>
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggle}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className={`ml-1 p-2 transition-all duration-150 ${inactiveCls}`}
+        {/* Center — nav links */}
+        <nav className="flex items-center gap-0">
+          {NAV_LINKS.map(({ to, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) => `${linkCls} ${isActive ? activeCls : inactiveCls}`}
             >
-              {isDark ? <SunIcon /> : <MoonIcon />}
-            </button>
-          </nav>
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Right — bell + theme toggle */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <NotificationBell user={user} />
+          <button
+            onClick={toggle}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 text-gray-500 hover:text-gray-50 transition-colors duration-150 cursor-pointer"
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+          </button>
         </div>
       </div>
     </header>

@@ -21,7 +21,12 @@
       "PowerShell(npm install *)",
       "Skill(ui-ux-pro-max)",
       "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"fintech portfolio tracker dark dashboard teal\" --design-system -p \"Tag Charting\")",
-      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"line chart area chart fintech dashboard\" --domain chart -n 3)"
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"line chart area chart fintech dashboard\" --domain chart -n 3)",
+      "Bash(git -C \".claude/worktrees/agent-aa4d126bda03c0093\" status --short)",
+      "Bash(git -C \".claude/worktrees/agent-aa4d126bda03c0093\" diff HEAD --stat)",
+      "Bash(git -C \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\\\\.claude\\\\worktrees\\\\agent-aa4d126bda03c0093\" log --oneline -5)",
+      "Bash(git -C \"C:\\\\Users\\\\hayde\\\\vintage-shirt-vault\\\\.claude\\\\worktrees\\\\agent-aa4d126bda03c0093\" diff HEAD~1 HEAD --stat)",
+      "Bash(git *)"
     ]
   }
 }

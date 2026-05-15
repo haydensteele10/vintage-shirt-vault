@@ -110,8 +110,8 @@ export default function AddShirtSheet() {
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className={`absolute bottom-0 left-0 right-0 mx-auto max-w-2xl flex flex-col bg-gray-900 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${animIn ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ borderRadius: '24px 24px 0 0', maxHeight: '90dvh', height: '90dvh' }}
+        className={`absolute bottom-0 left-0 right-0 mx-auto max-w-2xl flex flex-col shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${animIn ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ borderRadius: '24px 24px 0 0', maxHeight: '90dvh', height: '90dvh', backgroundColor: '#0D0D0D' }}
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -126,15 +126,15 @@ export default function AddShirtSheet() {
           onMouseUp={onDragEnd}
           aria-hidden="true"
         >
-          <div className="w-10 h-1 rounded-full bg-gray-700" />
+          <div className="w-10 h-1 rounded-full bg-gray-600" />
         </div>
 
         {/* ── Header ───────────────────────────────────────────────────── */}
-        <div className="flex-shrink-0 relative flex items-center justify-center px-5 py-3.5 border-b border-gray-800/60">
-          <h2 className="text-base font-bold text-gray-100 tracking-tight">Add Shirt</h2>
+        <div className="flex-shrink-0 relative flex items-center justify-center px-5 py-3.5 border-b border-gray-700">
+          <h2 className="text-base font-bold text-gray-50 tracking-tight">Add Shirt</h2>
           <button
             onClick={closeAddShirt}
-            className="absolute right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-gray-500 hover:text-gray-100 transition-colors"
+            className="absolute right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-50 transition-colors"
             aria-label="Close"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
